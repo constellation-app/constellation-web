@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- This is a standalone page that displays the BABYLONJS canvas. -->
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <title>Standalone Webstellation</title>
+    <link rel="shortcut icon" type="image/png" href="../constellation.png"/>
+    <script src="../babylon/babylon.max-4.1.0.js"></script>
+    <script src="../babylon/babylon.gui.js"></script>
+    <style>
+        html, body {
+            overflow: hidden;
+            width   : 100%;
+            height  : 100%;
+            margin  : 0;
+            padding : 0;
+        }
+
+        #renderCanvas {
+            width   : 100%;
+            height  : 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body>
+  <canvas id="renderCanvas"></canvas>
+  <script src="../graph_vis.js"></script>
+  <script>
+    'use strict';
+    window.addEventListener('DOMContentLoaded', function(){
+
+      const params = new URLSearchParams(document.location.search.substring(1));
+      let graphName = params.get('graph');
+      if(!graphName) {
+        graphName = '../graph-5.json'
+      }
+      console.log(`Graph file: ${graphName}`)
+
+      let vis = null;
+      const eventHandler = (event, id) => {
+        if(!vis) {
+          return;
+        }
+
+        console.log('Vis event handler:', event, id);
+        switch(event) {
+          case 'graph': // graph event
+            switch(id) {
+              case 'reset':
+                vis.resetCamera();
+                break;
+              case 'resize':
+                vis.resize();
+                break;
+              default:
+                console.log(`Unknown graph event ${id}`);
+            }
+            break;
+          case 'v': // vertex event
+            vis.selectVxId(id);
+            break;
+          case 'link':
+            vis.selectLinkId(id);
+          default:
+            console.log(`Unknown event ${event}`);
+        }
+      };
+
+      fetch(graphName)
+        .then(response => response.json())
+        .then(data => {
+          vis = createGraph(data, eventHandler, '..');
+        });
+    });
+  </script>
+</body>
+</html>
