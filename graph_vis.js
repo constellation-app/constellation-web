@@ -142,12 +142,19 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
         mesh.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
 
         const texture = new BABYLON.StandardMaterial('texture'+name, scene);
+        // texture.transparencyMode = BABYLON.Material.MATERIAL_ALPHATEST;
+        // texture.hasAlpha = true;
         // texture.emissiveTexture = new BABYLON.Texture(`${resourceDir}/highlight-texture.png`);
         texture.diffuseTexture = new BABYLON.Texture(`${resourceDir}/highlight-texture.png`);
-        // texture.alpha = 0.9;
-        // mat.backFaceCulling = true;
+        texture.diffuseTexture.hasAlpha = true;
+        // texture.alpha = true;
+        // texture.useAlphaFromDiffuseTexture = true;
+        // texture.alpha = 0.75;
+        // texture.backFaceCulling = true;
+        texture.useAlphaFromDiffuseTexture = true;
         mesh.material = texture;
-        mesh.material.alpha = 0.75;
+        // mesh.material.alpha = 0.75;
+
         return mesh;
       };
 
@@ -157,7 +164,7 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
         this.hide();
       }
 
-      show(position, diameter, scene) {
+      show(position, diameter, color, scene) {
         if(diameter!=this.diameter) {
           this.mesh.dispose();
           this.diameter = diameter;
@@ -169,6 +176,9 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
         // glow.addIncludedOnlyMesh(this.mesh);
 
         this.mesh.position = position;
+        this.mesh.material.diffuseColor = new BABYLON.Color4(...color);
+        // this.mesh.material.specularColor = new BABYLON.Color4(...color);
+        console.log('color', new BABYLON.Color4(...color));
         this.mesh.isVisible = true;
       }
 
@@ -178,7 +188,7 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
 
       spin() {
         if(this.mesh.isVisible) {
-          this.mesh.rotate(BABYLON.Axis.Z, Math.PI/24, BABYLON.Space.WORLD);
+          this.mesh.rotate(BABYLON.Axis.Z, Math.PI/48, BABYLON.Space.WORLD);
         }
       }
 
@@ -404,7 +414,7 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
 
     const selectVxId = id => {
       const v = data.vertex[id];
-      highlight.show(new BABYLON.Vector3(v.x, v.y, v.z), v.nradius*2.0, scene);
+      highlight.show(new BABYLON.Vector3(v.x, v.y, v.z), v.nradius*2.0, v.color, scene);
     };
 
     const selectLinkId = id => {

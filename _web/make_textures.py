@@ -26,6 +26,25 @@ def make_torus_colors():
 
     return img
 
+def make_torus_pieces():
+    """Make white sections for the node highlighting torus.
+
+    The top half contains the sections, the bottom half is transparent.
+    """
+
+    N = 256
+    PIECES = 16
+    W = N/PIECES
+    img = Image.new('RGBA', (N, N), (255, 0, 255, 0))
+    draw = ImageDraw.Draw(img)
+    # draw.rectangle([(0, 0), (N,N)], fill=(0, 255, 0, 0))
+
+    for i in range(PIECES):
+        if i%2==0:
+            draw.rectangle([(i*W,0), (i+1)*W,N/2], fill=(255, 255, 255, 255))
+
+    return img
+
 def make_link_chunks(debug=False):
     """Make a texture for a rotating cylinder around links.
 
@@ -102,6 +121,7 @@ def make_link_helix(debug=False):
         draw.line([(0,N//2), (N,N//2)], fill=(255,255,255,255))
 
     color = (0,0,255,255) if debug else (255,255,255,255)
+
     helix(0, 0, W)
     helix(0-W, N//4, W)
     helix(0-W, N//8, W)
@@ -115,7 +135,8 @@ def make_link_helix(debug=False):
 
 
 if __name__=='__main__':
-    img = make_torus_colors()
+    # img = make_torus_colors()
+    img = make_torus_pieces()
     img.save('highlight-texture.png')
 
     img = make_link_chunks()
