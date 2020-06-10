@@ -110,6 +110,30 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
     const SIZE = 2.5;
     const ARROWHEAD_LENGTH = 0.5;
 
+    /**
+     * Negate the z values, because Constellation and BABYLON handedness are different.
+     * Determine the physical (x,y,z) size of the graph.
+     *
+     * @param {graph data} data
+     * @returns The physical size of the graph (x,y,z distance from min to max coordinates).
+     */
+    const _resetZ = function(data) {
+      const values = Object.values(data.vertex);
+      const min3 = new BABYLON.Vector3(values[0].x, values[0].y, -values[0].z);
+      const max3 = new BABYLON.Vector3(values[0].x, values[0].y, -values[0].z);
+      values.forEach(v => {
+        v.z = -v.z;
+        min3.minimizeInPlaceFromFloats(v.x, v.y, v.z);
+        max3.maximizeInPlaceFromFloats(v.x, v.y, v.z);
+      });
+
+      const dist = BABYLON.Vector3.Distance(min3, max3);
+
+      return dist;
+    };
+
+    const PHYSICAL_SIZE = _resetZ(data);
+
     class Highlighter {
       static createHighlighter(name, diameter, scene) {
         diameter *= 2;
@@ -241,26 +265,6 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
      */
     class LineHighlighter {
       /**
-       * Determine the physical (x,y,z) size of the graph.
-       *
-       * @param {graph data} data
-       */
-      static _getPhysicalSize = function(data) {
-        const values = Object.values(data.vertex);
-        console.log(values);
-        const min3 = new BABYLON.Vector3(values[0].x, values[0].y, -values[0].z);
-        const max3 = new BABYLON.Vector3(values[0].x, values[0].y, -values[0].z);
-        values.forEach(v => {
-          min3.minimizeInPlaceFromFloats(v.x, v.y, -v.z);
-          max3.maximizeInPlaceFromFloats(v.x, v.y, -v.z);
-        });
-
-        const dist = BABYLON.Vector3.Distance(min3, max3);
-
-        return dist;
-      };
-
-      /**
        * Determine a diameter based on the size of the graph.
        * In a physically large graph, the line highlight can be hard to see.
        * We use arbitrary numbers to interpolate (change to make it better if you like):
@@ -309,8 +313,7 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
       }
 
       constructor(scene) {
-        const physicalSize = LineHighlighter._getPhysicalSize(data);
-        this.diameter = LineHighlighter._getDiameter(physicalSize);
+        this.diameter = LineHighlighter._getDiameter(PHYSICAL_SIZE);
 
         this.create(scene);
 
@@ -337,9 +340,9 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
         // Adjust for the optional src arrow and dst arrow.
         //
         const src = data.vertex[link.sid_];
-        const srcPos = new BABYLON.Vector3(src.x, src.y, -src.z);
+        const srcPos = new BABYLON.Vector3(src.x, src.y, src.z);
         const dst = data.vertex[link.did_];
-        const dstPos = new BABYLON.Vector3(dst.x, dst.y, -dst.z);
+        const dstPos = new BABYLON.Vector3(dst.x, dst.y, dst.z);
 
         const hypot = BABYLON.Vector3.Distance(srcPos, dstPos);
         const soffset = src.nradius * Math.sqrt(SIZE / 2) + arrowLen('<'); // offset by size of node
@@ -401,7 +404,7 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
 
     const selectVxId = id => {
       const v = data.vertex[id];
-      highlight.show(new BABYLON.Vector3(v.x, v.y, -v.z), v.nradius*2.0, scene);
+      highlight.show(new BABYLON.Vector3(v.x, v.y, v.z), v.nradius*2.0, scene);
     };
 
     const selectLinkId = id => {
@@ -412,7 +415,17 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
     // Camera.
     //
     const camera = new BABYLON.ArcRotateCamera('camera1', 0, 0, 0, new BABYLON.Vector3(0, 0, -0), scene);
-    camera.wheelPrecision = 50;
+    /**
+     * Determine the camera precision from the size of the graph.
+     * @param {dist} The physical size of the graph.
+     */
+    const cameraPrec = function(dist) {
+      dist = Math.max(0, dist-10)
+      dist *= 50/126;
+      dist += 50;
+      return dist;
+    }
+    camera.wheelPrecision = cameraPrec(PHYSICAL_SIZE);// 50;
 
     camera.attachControl(canvas, true);
     scene.activeCamera.panningSensibility = 50;
@@ -607,7 +620,7 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
         const offset = 1.25 / 2 + v.nradius * Math.sqrt(SIZE / 2); // offset by half height of cylinder + size of node
         instance.position.x = v.x + offset * Math.sin(zangle);
         instance.position.y = v.y + offset * Math.cos(zangle);
-        instance.position.z = -v.z;
+        instance.position.z = v.z;
       }
     };
 
@@ -632,7 +645,7 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
         const sprite = new BABYLON.Sprite(i, spriteMgr);
         sprite.position.x = vx.x;
         sprite.position.y = vx.y;
-        sprite.position.z = -vx.z;
+        sprite.position.z = vx.z;
         sprite.cellIndex = vx.fg_icon_index;
         sprite.size = SIZE * vx.nradius; // make the node sizees approximate Constellation.
 
@@ -658,13 +671,13 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
         sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, event => {
           eventHandler('v', event.source.name);
           // const v = data.vertex[event.source.name];
-          // highlight.show(new BABYLON.Vector3(v.x, v.y, -v.z), v.nradius*2.0, scene);
+          // highlight.show(new BABYLON.Vector3(v.x, v.y, v.z), v.nradius*2.0, scene);
         }));
 
         sprite.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnCenterPickTrigger, event => {
           const v = data.vertex[event.source.name];
           console.log('PickC', v);
-          camera.target = new BABYLON.Vector3(v.x, v.y, -v.z);
+          camera.target = new BABYLON.Vector3(v.x, v.y, v.z);
         }));
       }
     };
@@ -692,8 +705,8 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
         const ody = doffset * (dv.y - sv.y) / hypot;
         const odz = doffset * (dv.z - sv.z) / hypot;
         const line = [
-          new BABYLON.Vector3(sv.x - osx, sv.y - osy, -sv.z + osz),
-          new BABYLON.Vector3(dv.x - odx, dv.y - ody, -dv.z + odz)
+          new BABYLON.Vector3(sv.x - osx, sv.y - osy, sv.z - osz),
+          new BABYLON.Vector3(dv.x - odx, dv.y - ody, dv.z - odz)
         ];
         lines.push(line);
 
@@ -804,12 +817,12 @@ const createGraph = function(data, eventHandler, resourceDir='.') {
         const oz = offset * (sv.z - dv.z) / hypot;
         instance.position.x = dv.x + ox;
         instance.position.y = dv.y + oy;
-        instance.position.z = -dv.z - oz;
+        instance.position.z = dv.z + oz;
 
         // Make the arrowhead look at the destination node.
         // The pitch and roll make the cylinder line up in the correct direction.
         //
-        instance.lookAt(new BABYLON.Vector3(dv.x, dv.y, -dv.z), 0, -Math.PI / 2, Math.PI);
+        instance.lookAt(new BABYLON.Vector3(dv.x, dv.y, dv.z), 0, -Math.PI / 2, Math.PI);
       }
     };
 
