@@ -19,12 +19,23 @@ The following steps will change based on choice of database, but for MySQL the f
 * Create a new user for the database created above with the command "CREATE USER 'consty'@'localhost' IDENTIFIED BY 'password';". Note this user and password corresponds to values set in the settings file and can be changed as appropriate, both in the database and in the settings.py file.
 * Assign permissions to the database user "GRANT ALL PRIVILEGES ON constellation_db.* TO 'consty'@'localhost';"
 
-## Setup Python Environment
-TODO
-(In python shell traverse to the django subdirectory and run the commands "manage.py makemigrstions" and "manage.py migrate" to create)
+## Setup Python Environment (Windows/PyCharm)
+The following steps are used to prepare a valid python virtual environment, using PyCharm:
+* In PyCharm, select **Open**, select the **django** subdirectory and press the **OK** button. This will open the Django project within PyCharm.
+* Select **File->Settings**, expand the **Project:django** item and click on **Python Interpreter**.
+* Click the Gear :gear: icon and select **Add...**.
+* Ensure **New environment** is selected and set the following values:
+  * **Location** to a new folder **venv** within  the **django** folder
+  * **Base interpreter** to the location of the installed python application
+* Press the **OK** button and wait for the virtual environment to be created (this may take a minute or so)
+* Press **OK** again to close the **Settings** dialog (A new **venv** folder should be shown in PyCharm under the **django** folder 
+* Select **View->Tool Windows->Terminal** to open a new terminal window and converm the command prompt is prefixed with **(venv)**, if not, close the **Local** tab and reopen.
+* Enter the command "pip install -r requirements.txt" and wait for the required libraries are added
 
 ## Prepare Database For Use
-TODO
+The following steps are used to provision the database structure into the linked database identified above:
+* In a terminal shell within PyCharm (as launched above), from within the django directory, enter the command "manage.py makemigrations"
+* Confirm there were no errors and run the command "manage.py migrate"
 
 ## Start Backend Server
-TODO
+To start the backend server run the command "manage.py runserver", this command should trigger the launch of the backend server and identify the root URL to access it, ie "http://127.0.0.1:8000".
