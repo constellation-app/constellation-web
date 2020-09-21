@@ -59,7 +59,7 @@ def __update_graph_attribute(graph_attribute, value):
     if not isinstance(graph_attribute, GraphAttrib):
         raise InvalidTypeException("Supplied object is not GraphAttrib")
 
-    attrib_type = graph_attribute.attrib_fk.type_fk.type
+    attrib_type = graph_attribute.attrib_fk.type_fk.raw_type
     if attrib_type == AttribTypeChoice.DICT:
         graph_attribute.value_str = json.dumps(value)
     else:
@@ -487,9 +487,12 @@ class TransactionAttribRUDView(generics.RetrieveUpdateDestroyAPIView):
 @api_view(['POST'])
 def EditGraphAttribute(request):
     """
-    Set the value of the GraphAttrib object identified by the
-    :param request:
-    :return:
+    Allow a graph attribute to be added, or edited based on its containing
+    graph.
+    Body of POST should be of the form:
+        {"graph_id": 3, "label": "x", "value": 1.0}
+    Where graph_id identifies the parent graph, label is the name of the
+    attribute being modified and value is the value to change it to.
     """
     if request.method == 'POST':
 
@@ -525,8 +528,6 @@ def EditGraphAttribute(request):
                 else:
                     attribute = VertexAttrib(graph_fk=graph, attrib_fk=graph_attribute)
 
-            print("## DEBUG Attribute=" + str(attribute))
-
             # Set value
             __update_vertex_attribute(attribute, value)
         except Exception as e:
@@ -538,6 +539,14 @@ def EditGraphAttribute(request):
 # AttributeEditing
 @api_view(['POST'])
 def EditVertexAttribute(request):
+    """
+    Allow a vertex attribute to be added, or edited based on its containing
+    graph and vertex.
+    Body of POST should be of the form:
+        {"graph_id": 3, "vx_id": 0, "label": "x", "value": 1.0}
+    Where graph_id and vx_id identify the parent graph/vertex, label is the name
+    of the attribute being modified and value is the value to change it to.
+    """
     if request.method == 'POST':
 
         # Ensure post has graph_id, vx_id, label, value
@@ -567,14 +576,12 @@ def EditVertexAttribute(request):
             if attribute is None:
                 # See if a vertex attribute is defined for the graph with this label
                 graph = vertex.graph_fk
-                graph_attribute = graph.graphvertexattrib_set.all().filter(label=label).last()
-                if graph_attribute is None:
+                vertex_attribute = graph.graphvertexattrib_set.all().filter(label=label).last()
+                if vertex_attribute is None:
                     return Response({"Info": "Could not find attribute with supplied label for " +
                                              "selected vertex", "data": request.data})
                 else:
-                    attribute = VertexAttrib(vertex_fk=vertex, attrib_fk=graph_attribute)
-
-            print("## DEBUG Attribute=" + str(attribute))
+                    attribute = VertexAttrib(vertex_fk=vertex, attrib_fk=vertex_attribute)
 
             # Set value
             __update_vertex_attribute(attribute, value)
@@ -587,6 +594,14 @@ def EditVertexAttribute(request):
 # AttributeEditing
 @api_view(['POST'])
 def EditTransactionAttribute(request):
+    """
+    Allow a transaction attribute to be added, or edited based on its containing
+    graph and transaction.
+    Body of POST should be of the form:
+        {"graph_id": 3, "tx_id": 0, "label": "x", "value": 1.0}
+    Where graph_id and tx_id identify the parent graph/transaction, label is the
+    name of the attribute being modified and value is the value to change it to.
+    """
     if request.method == 'POST':
 
         # Ensure post has graph_id, tx_id, label, value
@@ -611,14 +626,12 @@ def EditTransactionAttribute(request):
             if transaction is None:
                 # See if a transaction attribute is defined for the graph with this label
                 graph = transaction.graph_fk
-                graph_attribute = graph.graphtransactionattrib_set.all().filter(label=label).last()
-                if graph_attribute is None:
+                transaction_attribute = graph.graphtransactionattrib_set.all().filter(label=label).last()
+                if transaction_attribute is None:
                     return Response({"Info": "Could not find attribute with supplied label for " +
                                              "selected transaction", "data": request.data})
                 else:
-                    attribute = VertexAttrib(transaction_fk=transaction, attrib_fk=graph_attribute)
-
-            print("## DEBUG Attribute=" + str(attribute))
+                    attribute = VertexAttrib(transaction_fk=transaction, attrib_fk=transaction_attribute)
 
             # Set value
             __update_transaction_attribute(attribute, value)
