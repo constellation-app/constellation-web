@@ -32,6 +32,7 @@ from app.serializers import VertexSerializer, VertexAttribSerializer
 from app.serializers import TransactionSerializer, TransactionAttribSerializer
 from app.serializers import GraphJsonVertexesSerializer, GraphJsonTransactionsSerializer
 from os import path
+import pathlib
 
 
 # <editor-fold Constants">
@@ -647,15 +648,30 @@ def EditTransactionAttribute(request):
 @api_view(['POST'])
 def ImportLegacyJSON(request):
     """
-    This view is just a POC view allowing real graph/star file JSON to be ingested into the database. It would NOT
-    persist in htis form in any final product.
+    This endpoint is provided to allow the import of legacy Graph files into the database.
+    These files can be found by extracting the graph.txt file from a star file and placing it
+    at a known location on disk.
+    To load a file, ente ra payload such as:
+    {"filename": "graph.json"}
+
+    Where graph.json is a file residing in the root of the Docker container. The easiest way to
+    achieve this is to copy the file into the backend directory prior to running the Docker
+    "up --build" command.
+
+    WARNING1: This endpoint os for development purposes onlyu, so is not overly robust - it
+    expects valid graph file data to exist.
+    WARNING2: The upload process is a slow process, grab a coffee ora chai latte and wait a few
+    minutes.
+    WARNING3: The imported depends on attrib_type values existing for all types defined in the
+    graph file, if any don't exist, they need to manually be created first.
+
     :param request:
     :return:
     """
+    print(pathlib.Path().absolute())
     if request.method == 'POST':
-
-        # MAintain a dictionary of known AttribType, these arethe types attributes are mapped to
-
+        print('****************************************')
+        # Maintain a dictionary of known AttribType, these arethe types attributes are mapped to
 
         # Look for a "filename" key in the request.data dictionary
         if "filename" not in request.data:
@@ -746,8 +762,6 @@ def ImportLegacyJSON(request):
             vtx_attrib = GraphAttribDefVertex(graph_fk=graph, label=label, type_fk=attr_type,
                                               descr=descr, default_str=default_str)
             vtx_attrib.save()
-
-
 
         # Create a dictionary of graph vertex attributes indexed by label
         graph_vertex_attributes = {}
