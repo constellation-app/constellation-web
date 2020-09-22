@@ -131,7 +131,6 @@ class SchemaAttribDefVertex(SchemaBaseAttribDef):
     pass
 
 
-# AttribModel
 class SchemaAttribDefTrans(SchemaBaseAttribDef):
     """
     A Transaction attribute object defined for a parent Schema object. These

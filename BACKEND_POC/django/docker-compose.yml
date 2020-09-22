@@ -1,0 +1,30 @@
+version: '3'
+
+services: 
+  db:
+    # Define the Database service
+    # Database name, user, and password must also be set in DATABASES block of
+    # the settings.py file.
+    #
+    image: mariadb
+    restart: always
+    command: ['--character-set-server=utf8', '--collation-server=utf8_unicode_ci']
+    environment:
+      MYSQL_DATABASE: "docker-db"
+      MYSQL_USER: "docker"
+      MYSQL_PASSWORD: "dockerpassword"
+      MYSQL_ROOT_PASSWORD: "dockerrootpassword"
+
+  web:
+    # Define the backend web application, This will be accessed at 
+    # http://127.0.0.1:8000/
+    build: .
+    command: bash -c "python manage.py makemigrations && python manage.py migrate && python manage.py loaddata attribtype.json && python manage.py runserver 0.0.0.0:8000"
+    container_name: constellation_web
+    restart: always
+    volumes:
+      - .:/app
+    ports: 
+      - "8000:8000"
+    depends_on:
+      - db
