@@ -81,10 +81,10 @@ WSGI_APPLICATION = 'webConstellation.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'constellation_db',
-        'USER': 'consty',
-        'PASSWORD': 'password',
-        'HOST': 'localhost',
+        'NAME': 'docker-db',           # This needs to match value of MYSQL_DATABASE in docker-compose.yml
+        'USER': 'docker',         # This needs to match value of MYSQL_USER in docker-compose.yml
+        'PASSWORD': 'dockerpassword', # This needs to match value of MYSQL_PASSWORD in docker-compose.yml
+        'HOST': 'db',                  # This matches the database service name in docker-compose.yml 
         'PORT': '3306'
     }
 }
