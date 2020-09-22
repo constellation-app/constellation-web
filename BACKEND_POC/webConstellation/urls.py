@@ -40,50 +40,50 @@ schema_view = get_schema_view(
 urlpatterns = [
 
     # <editor-fold AttribType URLs">
-    path('attrib_types/', views.AttribTypeLCView.as_view(),
+    path('attrib_types/', views.AttribTypesView.as_view(),
          name='attrib_types'),
-    path('attrib_type/<int:pk>', views.AttribTypeRUDView.as_view(),
+    path('attrib_type/<int:pk>', views.AttribTypeView.as_view(),
          name='attrib_type'),
     # </editor-fold>
 
     # <editor-fold Attribute definition hierarchy URLs">
-    path('schema_graph_attrib_defs/', views.SchemaAttribDefGraphLCView.as_view(),
+    path('schema_graph_attrib_defs/', views.SchemaAttribDefGraphsView.as_view(),
          name='schema_graph_attrib_defs'),
-    path('schema_graph_attrib_def/<int:pk>', views.SchemaAttribDefGraphRUDView.as_view(),
+    path('schema_graph_attrib_def/<int:pk>', views.SchemaAttribDefGraphView.as_view(),
          name='schema_graph_attrib_def'),
-    path('schema_vertex_attrib_defs/', views.SchemaAttribDefVertexLCView.as_view(),
+    path('schema_vertex_attrib_defs/', views.SchemaAttribDefVertexesView.as_view(),
          name='schema_vertex_attrib_defs'),
-    path('schema_vertex_attrib_def/<int:pk>', views.SchemaAttribDefVertexRUDView.as_view(),
+    path('schema_vertex_attrib_def/<int:pk>', views.SchemaAttribDefVertexView.as_view(),
          name='schema_vertex_attrib_def'),
-    path('schema_trans_attrib_defs/', views.SchemaAttribDefTransLCView.as_view(),
+    path('schema_trans_attrib_defs/', views.SchemaAttribDefTransactionsView.as_view(),
          name='schema_trans_attrib_defs'),
-    path('schema_trans_attrib_def/<int:pk>', views.SchemaAttribDefTransRUDView.as_view(),
+    path('schema_trans_attrib_def/<int:pk>', views.SchemaAttribDefTransactionView.as_view(),
          name='schema_trans_attrib_def'),
-    path('graph_attrib_defs/', views.GraphAttribDefGraphLCView.as_view(),
+    path('graph_attrib_defs/', views.GraphAttribDefGraphsView.as_view(),
          name='graph_attrib_defs'),
-    path('graph_attrib_def/<int:pk>', views.GraphAttribDefGraphRUDView.as_view(),
+    path('graph_attrib_def/<int:pk>', views.GraphAttribDefGraphView.as_view(),
          name='graph_attrib_def'),
-    path('vertex_attrib_defs/', views.GraphAttribDefVertexLCView.as_view(),
+    path('vertex_attrib_defs/', views.GraphAttribDefVertexesView.as_view(),
          name='vertex_attrib_defs'),
-    path('vertex_attrib_def/<int:pk>', views.GraphAttribDefVertexRUDView.as_view(),
+    path('vertex_attrib_def/<int:pk>', views.GraphAttribDefVertexView.as_view(),
          name='vertex_attrib_defs'),
-    path('trans_attrib_defs/', views.GraphAttribDefTransLCView.as_view(),
+    path('trans_attrib_defs/', views.GraphAttribDefTransactionsView.as_view(),
          name='trans_attrib_defs'),
-    path('trans_attrib_def/<int:pk>', views.GraphAttribDefTransRUDView.as_view(),
+    path('trans_attrib_def/<int:pk>', views.GraphAttribDefTransactionView.as_view(),
          name='trans_attrib_def'),
     # </editor-fold>
 
     # <editor-fold Schema URLs">
-    path('schemas/', views.SchemaLCView.as_view(),
+    path('schemas/', views.SchemasView.as_view(),
          name='schemas'),
-    path('schema/<int:pk>', views.SchemaRUDView.as_view(),
+    path('schema/<int:pk>', views.SchemaView.as_view(),
          name='schema'),
     # </editor-fold>
 
     # <editor-fold Graph URLs">
-    path('graphs/', views.GraphLCView.as_view(),
+    path('graphs/', views.GraphsView.as_view(),
          name='graphs'),
-    path('graph/<int:pk>', views.GraphRUDView.as_view(),
+    path('graph/<int:pk>', views.GraphView.as_view(),
          name='graph'),
     # </editor-fold>
 
@@ -97,22 +97,22 @@ urlpatterns = [
     # </editor-fold>
 
     # <editor-fold Vertex and VertexAttrib URLs">
-    path('vertexes/', views.VertexLCView.as_view(),
+    path('vertexes/', views.VertexesView.as_view(),
          name='vertexes'),
-    path('vertex/<int:vx_id>', views.VertexRUDView.as_view(),
+    path('vertex/<int:vx_id>', views.VertexView.as_view(),
          name='vertex'),
-    path('vertex_attributes/', views.VertexAttribLCView.as_view(),
+    path('vertex_attributes/', views.VertexAttributesView.as_view(),
          name='vertex_attributes'),
-    path('vertex_attribute/<int:pk>', views.VertexAttribRUDView.as_view(),
+    path('vertex_attribute/<int:pk>', views.VertexAttributeView.as_view(),
          name='vertex_attribute'),
     # </editor-fold>
 
     # <editor-fold Transaction and TransactionAttrib URLs">
-    path('transaction/<int:tx_id>', views.TransactionRUDView.as_view(),
+    path('transaction/<int:tx_id>', views.TransactionView.as_view(),
          name='transaction'),
-    path('transaction_attributes/', views.TransactionAttribLCView.as_view(),
+    path('transaction_attributes/', views.TransactionAttributesView.as_view(),
          name='transaction_attributes'),
-    path('transaction_attribute/<int:pk>', views.TransactionAttribRUDView.as_view(),
+    path('transaction_attribute/<int:pk>', views.TransactionAttributeView.as_view(),
          name='transaction_attribute'),
     # </editor-fold>
 
@@ -133,7 +133,7 @@ urlpatterns = [
     # Import legacy graph file JSON into the database. This requires the
     # contents of the .star file to be renamed .zip, then the enclosed file
     # copied out onto the file system and used as an input to the endpoint.
-    path('import/', views.ImportJSON, name='import_json'),
+    path('import/', views.ImportLegacyJSON, name='import_json'),
 
     # Added endpoint for developmental performance tuning
     url(r'^silk/', include('silk.urls', namespace='silk')),

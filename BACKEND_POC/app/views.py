@@ -126,7 +126,7 @@ def __update_transaction_attribute(transaction_attribute, value):
 
 
 # <editor-fold AttribType Views">
-class AttribTypeLCView(generics.ListCreateAPIView):
+class AttribTypesView(generics.ListCreateAPIView):
     """
     Support Create and List operations of custom application attribute types
     (AttribType) used to data types of attributes.
@@ -135,7 +135,7 @@ class AttribTypeLCView(generics.ListCreateAPIView):
     serializer_class = AttribTypeSerializer
 
 
-class AttribTypeRUDView(generics.RetrieveUpdateDestroyAPIView):
+class AttribTypeView(generics.RetrieveUpdateDestroyAPIView):
     """
     Support Read, Update, and Destroy operations of custom application
     attribute types (AttribType) used to data types of attributes.
@@ -146,7 +146,7 @@ class AttribTypeRUDView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # <editor-fold Attribute definition hierarchy Views">
-class SchemaAttribDefGraphLCView(generics.ListCreateAPIView):
+class SchemaAttribDefGraphsView(generics.ListCreateAPIView):
     """
     Support Create and List operations of Graph attributes to be defined in a
     Schema.
@@ -155,7 +155,7 @@ class SchemaAttribDefGraphLCView(generics.ListCreateAPIView):
     serializer_class = SchemaAttribDefGraphSerializer
 
 
-class SchemaAttribDefGraphRUDView(generics.RetrieveUpdateDestroyAPIView):
+class SchemaAttribDefGraphView(generics.RetrieveUpdateDestroyAPIView):
     """
     Support Read, Update, and Destroy operations of Graph attributes to be
     defined in a Schema.
@@ -164,7 +164,7 @@ class SchemaAttribDefGraphRUDView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SchemaAttribDefGraphSerializer
 
 
-class SchemaAttribDefVertexLCView(generics.ListCreateAPIView):
+class SchemaAttribDefVertexesView(generics.ListCreateAPIView):
     """
     Support Create and List operations of Vertex attributes to be defined in a
     Schema.
@@ -173,7 +173,7 @@ class SchemaAttribDefVertexLCView(generics.ListCreateAPIView):
     serializer_class = SchemaAttribDefVertexSerializer
 
 
-class SchemaAttribDefVertexRUDView(generics.RetrieveUpdateDestroyAPIView):
+class SchemaAttribDefVertexView(generics.RetrieveUpdateDestroyAPIView):
     """
     Support Read, Update, and Destroy operations of Vertex attributes to be
     defined in a Schema.
@@ -182,7 +182,7 @@ class SchemaAttribDefVertexRUDView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SchemaAttribDefVertexSerializer
 
 
-class SchemaAttribDefTransLCView(generics.ListCreateAPIView):
+class SchemaAttribDefTransactionsView(generics.ListCreateAPIView):
     """
     Support Create and List operations of Transaction attributes to be defined
     in a Schema.
@@ -191,7 +191,7 @@ class SchemaAttribDefTransLCView(generics.ListCreateAPIView):
     serializer_class = SchemaAttribDefTransSerializer
 
 
-class SchemaAttribDefTransRUDView(generics.RetrieveUpdateDestroyAPIView):
+class SchemaAttribDefTransactionView(generics.RetrieveUpdateDestroyAPIView):
     """
     Support Read, Update, and Destroy operations of Transaction attributes to
     be defined in a Schema.
@@ -200,7 +200,7 @@ class SchemaAttribDefTransRUDView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SchemaAttribDefTransSerializer
 
 
-class GraphAttribDefGraphLCView(generics.ListCreateAPIView):
+class GraphAttribDefGraphsView(generics.ListCreateAPIView):
     """
     Support Create and List operations of Graph attributes to be tied to a
     specific Graph.
@@ -209,7 +209,7 @@ class GraphAttribDefGraphLCView(generics.ListCreateAPIView):
     serializer_class = GraphAttribDefGraphSerializer
 
 
-class GraphAttribDefGraphRUDView(generics.RetrieveUpdateDestroyAPIView):
+class GraphAttribDefGraphView(generics.RetrieveUpdateDestroyAPIView):
     """
     Support Read, Update, and Destroy operations of Graph attributes to be
     tied to a specific Graph.
@@ -218,7 +218,7 @@ class GraphAttribDefGraphRUDView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = GraphAttribDefGraphSerializer
 
 
-class GraphAttribDefVertexLCView(generics.ListCreateAPIView):
+class GraphAttribDefVertexesView(generics.ListCreateAPIView):
     """
     Support Create and List operations of Vertex attributes to be tied to a
     specific Graph.
@@ -227,7 +227,7 @@ class GraphAttribDefVertexLCView(generics.ListCreateAPIView):
     serializer_class = GraphAttribDefVertexSerializer
 
 
-class GraphAttribDefVertexRUDView(generics.RetrieveUpdateDestroyAPIView):
+class GraphAttribDefVertexView(generics.RetrieveUpdateDestroyAPIView):
     """
     Support Read, Update, and Destroy operations of Vertex attributes to be
     tied to a specific Graph.
@@ -236,7 +236,7 @@ class GraphAttribDefVertexRUDView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = GraphAttribDefVertexSerializer
 
 
-class GraphAttribDefTransLCView(generics.ListCreateAPIView):
+class GraphAttribDefTransactionsView(generics.ListCreateAPIView):
     """
     Support Read, Update, and Destroy operations of Transaction attributes to
     be tied to a specific Graph.
@@ -245,7 +245,7 @@ class GraphAttribDefTransLCView(generics.ListCreateAPIView):
     serializer_class = GraphAttribDefTransSerializer
 
 
-class GraphAttribDefTransRUDView(generics.RetrieveUpdateDestroyAPIView):
+class GraphAttribDefTransactionView(generics.RetrieveUpdateDestroyAPIView):
     """
     Support Read, Update, and Destroy operations of Transaction attributes to
     be tied to a specific Graph.
@@ -256,7 +256,7 @@ class GraphAttribDefTransRUDView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # <editor-fold Schema Views">
-class SchemaLCView(generics.ListCreateAPIView):
+class SchemasView(generics.ListCreateAPIView):
     """
     Support Create and List operations of graph schemas (Schemas) used to
     define categorized styling for graph information.
@@ -265,7 +265,7 @@ class SchemaLCView(generics.ListCreateAPIView):
     serializer_class = SchemaSerializer
 
 
-class SchemaRUDView(generics.RetrieveUpdateDestroyAPIView):
+class SchemaView(generics.RetrieveUpdateDestroyAPIView):
     """
     Support Read, Update, and Destroy operations of graph schemas (Schemas)
     used to define categorized styling for graph information.
@@ -276,7 +276,7 @@ class SchemaRUDView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # <editor-fold Graph Views">
-class GraphLCView(generics.ListCreateAPIView):
+class GraphsView(generics.ListCreateAPIView):
     """
     Support Create and List operations of Graph objects. The Create operation
     will populate definitions of attributes to be used within the graph at
@@ -300,7 +300,7 @@ class GraphLCView(generics.ListCreateAPIView):
         # Check if a schema was selected, if so identify all default attributes
         # defined for the schema
         schema_id = request.data['schema_fk'] if (request.data['schema_fk'] != '') else 0
-        graph = super(GraphLCView, self).create(request, *args, **kwargs)
+        graph = super(GraphsView, self).create(request, *args, **kwargs)
         graph_record = Graph.objects.filter(title=request.data['title']).last()
 
         schema_graph_attribs = SchemaAttribDefGraph.objects.filter(schema_fk=schema_id)
@@ -335,7 +335,7 @@ class GraphLCView(generics.ListCreateAPIView):
         return graph
 
 
-class GraphRUDView(generics.RetrieveUpdateDestroyAPIView):
+class GraphView(generics.RetrieveUpdateDestroyAPIView):
     """
     Support Read, Update, and Destroy operations of Graph objects.
     """
@@ -374,7 +374,7 @@ class GraphJsonTransactions(generics.RetrieveAPIView):
 
 
 # <editor-fold Vertex and VertexAttrib views">
-class VertexLCView(generics.ListCreateAPIView):
+class VertexesView(generics.ListCreateAPIView):
     """
     Support Create and List operations of Vertexes.
     """
@@ -382,7 +382,7 @@ class VertexLCView(generics.ListCreateAPIView):
     serializer_class = VertexSerializer
 
 
-class VertexRUDView(generics.RetrieveUpdateDestroyAPIView):
+class VertexView(generics.RetrieveUpdateDestroyAPIView):
     """
     Support Read, Update, and Destroy operations of Vertexes.
     """
@@ -391,7 +391,7 @@ class VertexRUDView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'vx_id'
 
 
-class VertexAttribLCView(generics.ListCreateAPIView):
+class VertexAttributesView(generics.ListCreateAPIView):
     """
     Manage VertexAttrib Create and List operations. Read, Update, Destroy operations are managed in VertexAttribList.
     """
@@ -399,7 +399,7 @@ class VertexAttribLCView(generics.ListCreateAPIView):
     serializer_class = VertexAttribSerializer
 
 
-class VertexAttribRUDView(generics.RetrieveUpdateDestroyAPIView):
+class VertexAttributeView(generics.RetrieveUpdateDestroyAPIView):
     """
     Manage VertexAttrib Read, Update, Destroy operations. Create and List operations are managed in VertexAttribList.
     """
@@ -424,7 +424,7 @@ class VertexAttribRUDView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # <editor-fold Transaction and TransactionAttrib views">
-class TransactionLCView(generics.ListCreateAPIView):
+class TransactionsView(generics.ListCreateAPIView):
     """
     Manage Transaction Create and List operations. Read, Update, Destroy
     operations are managed in TransactionRetrieveUpdateDestroyView.
@@ -433,7 +433,7 @@ class TransactionLCView(generics.ListCreateAPIView):
     serializer_class = TransactionSerializer
 
 
-class TransactionRUDView(generics.RetrieveUpdateDestroyAPIView):
+class TransactionView(generics.RetrieveUpdateDestroyAPIView):
     """
     Manage Transaction Read, Update, Destroy operations. Create and List
     operations are managed in TransactionListListCreateView.
@@ -443,7 +443,7 @@ class TransactionRUDView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'tx_id'
 
 
-class TransactionAttribLCView(generics.ListCreateAPIView):
+class TransactionAttributesView(generics.ListCreateAPIView):
     """
     Manage TransactionAttrib Create and List operations. Read, Update, Destroy
     operations are managed in VertexAttribList.
@@ -452,7 +452,7 @@ class TransactionAttribLCView(generics.ListCreateAPIView):
     serializer_class = TransactionAttribSerializer
 
 
-class TransactionAttribRUDView(generics.RetrieveUpdateDestroyAPIView):
+class TransactionAttributeView(generics.RetrieveUpdateDestroyAPIView):
     """
     Manage TransactionAttrib Read, Update, Destroy operations. Create and List
     operations are managed in TransactionAttribList.
@@ -645,7 +645,7 @@ def EditTransactionAttribute(request):
 
 # <editor-fold Test Code - Generate Data from Existing Graph JSON file">
 @api_view(['POST'])
-def ImportJSON(request):
+def ImportLegacyJSON(request):
     """
     This view is just a POC view allowing real graph/star file JSON to be ingested into the database. It would NOT
     persist in htis form in any final product.
@@ -837,15 +837,13 @@ def ImportJSON(request):
             count = count + 1
         print(' .... adding transaction block transactions: (' + str(count) + ' of ' + str(len(transactions)) + ')')
 
-
         if 'meta' in meta_block:
             print('JSON has meta block')
 
         graph.next_vertex_id = max_vx_id + 1
         graph.save()
 
-
-        return Response({"message": "Completed procerssing import", "data": request.data})
+        return Response({"message": "Completed processing import", "data": request.data})
 
     return Response({"message": ""})
 # </editor-fold>

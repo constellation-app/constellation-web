@@ -47,4 +47,12 @@ The following steps assume the user is running Docker from a Windows environment
 1. Open a powershell window, and navigate to the **BACKEND_POC** directory.
 2. Execute the command "docker-compose up --build"
 3. Wait for the Docker container to complete installation.
-4. In a browser, navigate to http://127.0.0.1:8000/ to view the Swagger REST API summary.
+4. In a browser, navigate to **http://127.0.0.1:8000/** to view the Swagger REST API summary.
+
+## Application Use
+Users can  use the Swagger GUI directly to interact with the backend application, alternatively, the
+Swagger API describes the available REST endpoints. These endpoints can be accessed directly. For
+instance, the **attrib_types** endpoint provides a GET and a POST endpoint, both listing the URL
+**/attrib_types/**. To access these endpoints using the direct REST GUI go to
+**http://127.0.0.1:8000/attrib_types/**. These endpoints can be accessed directly from any frontend
+client.
