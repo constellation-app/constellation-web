@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_yasg',
     'app.apps.AppConfig',
     'silk',
 ]
@@ -108,6 +109,12 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+
+# settings to support swagger API endpoint at base of application URL
+SWAGGER_SETTINGS = {
+   'USE_SESSION_AUTH': False
+}
 
 
 # Internationalization
