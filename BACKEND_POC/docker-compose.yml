@@ -7,6 +7,7 @@ services:
     # the settings.py file.
     #
     image: mariadb
+    command: --max_allowed_packet=256M   # Set max_allowed_packet to 256M
     restart: always
     command: ['--character-set-server=utf8', '--collation-server=utf8_unicode_ci']
     environment:
@@ -19,7 +20,7 @@ services:
     # Define the backend web application, This will be accessed at 
     # http://127.0.0.1:8000/
     build: .
-    command: bash -c "python manage.py makemigrations && python manage.py migrate && python manage.py loaddata attribtype.json && python manage.py runserver 0.0.0.0:8000"
+    command: bash -c "python manage.py makemigrations && python manage.py migrate && python manage.py loaddata attribtype.json && python -u manage.py runserver 0.0.0.0:8000"
     container_name: constellation_web
     restart: always
     volumes:

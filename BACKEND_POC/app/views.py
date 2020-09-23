@@ -16,7 +16,10 @@
  *
 """
 
+import os
 import json
+import zipfile
+from os import path
 from rest_framework import permissions, generics
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -31,8 +34,6 @@ from app.serializers import GraphAttribDefGraphSerializer, GraphAttribDefVertexS
 from app.serializers import VertexSerializer, VertexAttribSerializer
 from app.serializers import TransactionSerializer, TransactionAttribSerializer
 from app.serializers import GraphJsonVertexesSerializer, GraphJsonTransactionsSerializer
-from os import path
-import pathlib
 
 
 # <editor-fold Constants">
@@ -537,7 +538,6 @@ def EditGraphAttribute(request):
         return Response({"Info": "Found all keys", "data": request.data})
 
 
-# AttributeEditing
 @api_view(['POST'])
 def EditVertexAttribute(request):
     """
@@ -592,7 +592,6 @@ def EditVertexAttribute(request):
         return Response({"Info": "Found all keys", "data": request.data})
 
 
-# AttributeEditing
 @api_view(['POST'])
 def EditTransactionAttribute(request):
     """
@@ -649,37 +648,39 @@ def EditTransactionAttribute(request):
 def ImportLegacyJSON(request):
     """
     This endpoint is provided to allow the import of legacy Graph files into the database.
-    These files can be found by extracting the graph.txt file from a star file and placing it
-    at a known location on disk.
-    To load a file, ente ra payload such as:
-    {"filename": "graph.json"}
+    To load a file, enter a payload such as: {"filename": "analyticgraph1.star"}
+    Where analyticgraph1.star is a file residing in the ./import subdirectory of the Docker
+    container. The easiest way to achieve this is run the batch file upload_starfile.bat supplying
+    it the full path of the file to upload. This script will output some JSON to cut and paste
+    into the payload of the POST command.
 
-    Where graph.json is a file residing in the root of the Docker container. The easiest way to
-    achieve this is to copy the file into the backend directory prior to running the Docker
-    "up --build" command.
-
-    WARNING1: This endpoint os for development purposes onlyu, so is not overly robust - it
+    WARNING1: This endpoint is for development purposes only, so is not overly robust - it
     expects valid graph file data to exist.
-    WARNING2: The upload process is a slow process, grab a coffee ora chai latte and wait a few
+    WARNING2: The upload process is a slow process, grab a coffee or a chai latte and wait a few
     minutes.
     WARNING3: The imported depends on attrib_type values existing for all types defined in the
-    graph file, if any don't exist, they need to manually be created first.
-
-    :param request:
-    :return:
+    graph file, if any don't exist, they need to manually be created first. An error will be
+    returned in the POST output highlighting the attrib_type labels that need to be created.
     """
-    print(pathlib.Path().absolute())
     if request.method == 'POST':
-        print('****************************************')
-        # Maintain a dictionary of known AttribType, these arethe types attributes are mapped to
+        # Maintain a dictionary of known AttribType, these are the types attributes are mapped to
 
         # Look for a "filename" key in the request.data dictionary
         if "filename" not in request.data:
             return Response({"Error": "filename key not found in request.data!", "data": request.data})
-        if not path.isfile(str(request.data["filename"])):
-            return Response({"Error": "supplied filename could not be found", "data": request.data})
 
-        f = open(request.data["filename"], )
+        star_filename = path.join('import', str(request.data["filename"]))
+
+        if not path.isfile(star_filename):
+            return Response({"Error": "supplied filename could not be found in import directory", "data": request.data})
+
+        # Unzip the star file to get its inner graph.txt
+        with zipfile.ZipFile(star_filename, 'r') as zip_ref:
+            zip_ref.extractall('import')
+
+        # Process the inner graph file
+        json_filename = path.join('import', 'graph.txt')
+        f = open(json_filename, )
         data = json.load(f, encoding="utf8")
 
         # TODO, this code currently expecting array of dictionaries
@@ -690,6 +691,7 @@ def ImportLegacyJSON(request):
         meta_block = data[4]
 
         # Ensure all attribute types are already defined
+        missing_attribute_types = set()
         attr_types = list(AttribType.objects.all().values_list('label', flat=True))
         attr_type_error = False
         attrs = graph_block['graph'][0]['attrs']
@@ -697,22 +699,21 @@ def ImportLegacyJSON(request):
             typename = attr['type']
             if typename not in attr_types:
                 attr_type_error = True
-                print('ERROR: The (graph) type "' + typename + '" is NOT known, please add before importing')
+                missing_attribute_types.add(typename)
         attrs = vertex_block['vertex'][0]['attrs']
         for attr in attrs:
             typename = attr['type']
             if typename not in attr_types:
                 attr_type_error = True
-                print('ERROR: The (vertex) type "' + typename + '" is NOT known, please add before importing')
+                missing_attribute_types.add(typename)
         attrs = transaction_block['transaction'][0]['attrs']
         for attr in attrs:
             typename = attr['type']
             if typename not in attr_types:
                 attr_type_error = True
-                print('ERROR: The (transaction) type "' + typename + '" is NOT known, please add before importing')
-
+                missing_attribute_types.add(typename)
         if attr_type_error:
-            return Response({"Error": "Unknown attribute types specified, refer to log", "data": request.data})
+            return Response({"Error": "Unknown attribute types specified: " + str(missing_attribute_types), "data": request.data})
 
         # Create a dictionary of attribute types indexed by name
         attr_types = {}
@@ -722,8 +723,6 @@ def ImportLegacyJSON(request):
 
         schema = None
         if 'version' in version_block and 'schema' in version_block:
-            print('JSON has version block')
-            print('JSON has schema=' + str(version_block['schema']))
             schema_name = version_block['schema']
 
             # Check if schema already exists
@@ -737,8 +736,6 @@ def ImportLegacyJSON(request):
 
                 # Now get handle to the new schema
                 new_schema = Schema.objects.last()
-                print("#s### NewSchema=" + str(schema))
-            print("#### Schema=" + str(schema) + ":" + str(schema.id))
 
         # If graph already exists in DB, delete all its records so it can be recreated
         Graph.objects.filter(title=request.data["filename"]).delete()
@@ -749,8 +746,6 @@ def ImportLegacyJSON(request):
         if 'graph' in graph_block:
             print('JSON has graph block')
 
-        print('Processing vertex block')
-        print(' .... adding vertex block attributes')
         attrs = vertex_block['vertex'][0]['attrs']
         for attr in attrs:
             label = attr['label']
@@ -799,10 +794,7 @@ def ImportLegacyJSON(request):
                                                  value_str=value)
                     vertex_attrib.save()
             count = count + 1
-        print(' .... adding vertex block vertexes: (' + str(count) + ' of ' + str(len(vertexes)) + ')')
 
-        print('Processing transaction block')
-        print(' .... adding transaction block attributes')
         attrs = transaction_block['transaction'][0]['attrs']
         for attr in attrs:
             label = attr['label']
@@ -823,8 +815,8 @@ def ImportLegacyJSON(request):
                 print(' .... adding transaction block transactions: (' + str(count) + ' of ' + str(len(transactions)) + ')')
             tx_id = trans['tx_id_']
             tx_dir = trans['tx_dir_']
-            vx_src = Vertex.objects.get(vx_id=trans['vx_src_'])
-            vx_dst = Vertex.objects.get(vx_id=trans['vx_dst_'])
+            vx_src = Vertex.objects.get(vx_id=trans['vx_src_'], graph_fk=graph)
+            vx_dst = Vertex.objects.get(vx_id=trans['vx_dst_'], graph_fk=graph)
             max_tx_id = max(max_tx_id, tx_id)
 
             # Add transaction attributes to rolled up transaction JSON
@@ -843,21 +835,24 @@ def ImportLegacyJSON(request):
 
                     # TODO: sometime string is either string or json, in this case, if its json, better to convert
                     # TODO: to double quote JSON with json.dumps
-                    if graph_trans_attrib.type_fk.type == AttribTypeChoice.DICT.value:
+                    if graph_trans_attrib.type_fk.raw_type == AttribTypeChoice.DICT.value:
                         value = json.dumps(value)
                     transaction_attrib = TransactionAttrib(transaction_fk=transaction, attrib_fk=graph_trans_attrib,
                                                            value_str=value)
                     transaction_attrib.save()
             count = count + 1
-        print(' .... adding transaction block transactions: (' + str(count) + ' of ' + str(len(transactions)) + ')')
 
         if 'meta' in meta_block:
             print('JSON has meta block')
 
         graph.next_vertex_id = max_vx_id + 1
+        graph.next_transaction_id = max_tx_id + 1
         graph.save()
 
+        os.remove(star_filename)
+        os.remove(json_filename)
         return Response({"message": "Completed processing import", "data": request.data})
 
     return Response({"message": ""})
+
 # </editor-fold>

@@ -56,3 +56,12 @@ instance, the **attrib_types** endpoint provides a GET and a POST endpoint, both
 **/attrib_types/**. To access these endpoints using the direct REST GUI go to
 **http://127.0.0.1:8000/attrib_types/**. These endpoints can be accessed directly from any frontend
 client.
+
+To view database content:
+1. Open Docker Dashboard (in windows right click on docker icon in taskbar and select Dashboard)
+2. Expand the backend_poc entry
+3. Highlight the **backend_poc_db_8" instance and click on the CLI icon.
+4. In the shell that opens, enter "mysql -p" and enter the root password defined in**docker-compose.yml**
+5. Enter "use database docker-db";
+Use normal SQL commands to interrogate the database.
+
