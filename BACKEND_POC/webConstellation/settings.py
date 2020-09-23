@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'app.apps.AppConfig',
     'silk',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [

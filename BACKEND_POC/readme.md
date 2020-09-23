@@ -65,3 +65,18 @@ To view database content:
 5. Enter "use database docker-db";
 Use normal SQL commands to interrogate the database.
 
+## View Models
+To autogenerate a model diagram, the **graph_models** functionlaity from **django-extensions**
+has been used. To use this refer to documentation here 
+https://django-extensions.readthedocs.io/en/latest/graph_models.html, and here
+https://simpleit.rocks/python/django/generate-uml-class-diagrams-from-django-models/
+which outlines the process.
+There is a dependency on the application GraphViz - found here https://graphviz.org/. Install this
+application and add a link to its bin directory to your computers path (and restart PyCharm).
+To generate graph, run the following command:
+><em>python manage.py graph_models -a -g -I Schema,Graph,GraphAttrib,Vertex,VertexAttrib,Transaction,TransactionAttrib,GraphAttribDefGraph,GraphAttribDefVertex,G
+raphAttribDefTrans,SchemaAttribDefGraph,SchemaAttribDefVertex,SchemaAttribDefTrans,AttribType,SchemaBaseAttribDef,GraphBaseAttribDef -o models.png</em>
+
+Note, this lists explict models to plot.
+
+
