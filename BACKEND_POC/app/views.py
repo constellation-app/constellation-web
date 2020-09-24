@@ -849,7 +849,6 @@ def ImportLegacyJSON(request):
         graph.next_transaction_id = max_tx_id + 1
         graph.save()
 
-        os.remove(star_filename)
         os.remove(json_filename)
         return Response({"message": "Completed processing import", "data": request.data})
 
