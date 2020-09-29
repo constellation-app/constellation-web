@@ -26,4 +26,12 @@ export class BufferBuilder {
         buffer.push((Math.floor((linkOffset + 128) * 256) << 16) | Math.floor(linkWidth * 256));
         buffer.push(color | ((arrow ? 1 : 0) << 24));
     }
+
+    static selectNode(id: number, nodeVisuals: Uint32Array): void {
+        nodeVisuals[id * 2 + 1] |= 0x1000000;
+    }
+
+    static deselectNode(id: number, nodeVisuals: Uint32Array): void {
+        nodeVisuals[id * 2 + 1] &= 0xFEFFFFFF;
+    }
 }

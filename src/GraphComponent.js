@@ -1,38 +1,51 @@
 import React, { Component } from 'react'
 
-import { Matrix } from './Matrix';
-import { CanvasController } from './CanvasController';
-import { GraphRenderer } from './GraphRenderer';
+import { CanvasController } from './renderer/CanvasController';
+import { GraphRenderer } from './renderer/GraphRenderer';
 
 import { RotateAction, FrameRateAction } from './CanvasActions';
-import { GlyphRenderer } from './GlyphRenderer';
+import { GlyphRenderer } from './renderer/GlyphRenderer';
 import { TestGraphs } from './TestGraphs';
 
 import './GraphComponent.css';
+import { BufferBuilder } from './renderer/utilities/BufferBuilder';
+import { Selector } from './renderer/utilities/Selector';
+import { Trackball } from './renderer/listeners/Trackball';
+import { Camera } from './renderer/Camera';
+import { NodeHoverSelector } from './renderer/listeners/NodeHoverSelector';
+import { ZoomGesture } from './renderer/listeners/ZoomGesture';
+import { PanGesture } from './renderer/listeners/PanGesture';
 
 class GraphComponent extends Component {
 
     canvasRef = React.createRef();
+    camera = null;
+    
+    componentDidMount = () => {     
 
-    componentDidMount = () => {      
       var controller = new CanvasController(this.canvasRef.current);
       var gl = controller.gl;
   
-      const viewMatrix = Matrix.createViewMatrix(0, 0, 10, 0, 0, 0, 0, 1, 0);
-      const projectionMatrix = Matrix.createProjectionMatrix(1, gl.canvas.width / gl.canvas.height, 1, 10000);
-      
       const nodeCount = 1000; const graphRadius = 400; const linkLength = 100;
       // const nodeCount = 50000; const graphRadius = 400; const linkLength = 20;
         
       var { nodePositions, nodeVisuals, linkPositions } = TestGraphs.closestNeighbours(nodeCount, graphRadius, linkLength);
-      console.log(linkPositions.length / 4);
-
+      // var { nodePositions, nodeVisuals, linkPositions } = TestGraphs.center();
+      
+      this.nodePositions = nodePositions;
+      this.nodeVisuals = nodeVisuals;
+      
       const graphRenderer = new GraphRenderer(gl);
-      graphRenderer.setViewMatrix(viewMatrix);
-      graphRenderer.setProjectionMatrix(projectionMatrix);
+
+      this.camera = new Camera(graphRenderer);
+      this.camera.setProjection(1024, 1024, Math.PI * 0.5, 1, 10000);
+      this.camera.lookAt(new Float32Array([400, 0, 300]), new Float32Array([0, 0, 0]), new Float32Array([0, 1, 0]));
+
       graphRenderer.setNodes(nodePositions, nodeVisuals);
       graphRenderer.setLinks(linkPositions);
       graphRenderer.setGlyphScale(3);
+
+      this.graphRenderer = graphRenderer;
 
       var glyphRenderer = new GlyphRenderer(36, 'NotoSansSC-Black.otf', 2, (error) => {
         graphRenderer.setGlyphRenderer(glyphRenderer);
@@ -47,21 +60,34 @@ class GraphComponent extends Component {
         graphRenderer.setGlyphColor(new Float32Array([1, 1, 0]));
       });
 
-      const rotateAction = new RotateAction(graphRenderer);
+      const rotateAction = new RotateAction(this.camera);
       const frameRateAction = new FrameRateAction();
 
       controller.render = (gl, time) => {
-        rotateAction.execute(time);
-        frameRateAction.execute(time);
+        // rotateAction.execute(time);
+        // frameRateAction.execute(time);
         graphRenderer.render();
       };
 
       controller.updateSize = (width, height) => {
-        Matrix.updateProjectionMatrix(1, width / height, 1, 10000, projectionMatrix);
-        graphRenderer.setProjectionMatrix(projectionMatrix);
+        this.camera.setSize(width, height);
       };
 
       controller.start();
+
+      // new Trackball(this.canvasRef.current, this.camera);
+      const nodeHoverSelector = new NodeHoverSelector(this.canvasRef.current, this.camera, this.graphRenderer, this.nodePositions, this.nodeVisuals, true);
+      new ZoomGesture(nodeHoverSelector);
+      new PanGesture(nodeHoverSelector);
+    }
+
+    clickHandler = (event) => {
+      const selectedId = Selector.selectNode(event.clientX, event.clientY, this.camera, this.nodePositions);
+      if (selectedId) {
+        console.log(selectedId);
+        BufferBuilder.selectNode(selectedId, this.nodeVisuals);
+        this.graphRenderer.updateNodeVisuals(this.nodeVisuals, selectedId, selectedId + 1);
+      }
     }
 
     render() {

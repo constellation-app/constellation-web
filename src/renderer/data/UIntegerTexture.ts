@@ -1,20 +1,20 @@
 export class UIntegerTexture {
-    readonly gl: any;
+    readonly gl: WebGL2RenderingContext;
     readonly textureUnit: number;
     readonly elements: number;
     readonly width: number;
     readonly height: number;
-    readonly texture: number;
+    readonly texture: WebGLTexture;
     readonly internalFormat: number;
     readonly srcFormat: number;
 
-    constructor(gl: any, textureUnit: number, elements: number, width: number, height: number) {
+    constructor(gl: WebGL2RenderingContext, textureUnit: number, elements: number, width: number, height: number) {
         this.gl = gl;
         this.textureUnit = textureUnit;
         this.elements = elements;
         this.width = width;
         this.height = height;
-        this.texture = gl.createTexture();
+        this.texture = gl.createTexture()!;
         this.internalFormat = UIntegerTexture.calculateInternalFormat(gl, elements);
         this.srcFormat = UIntegerTexture.calculateSrcFormat(gl, elements);
 
@@ -51,6 +51,52 @@ export class UIntegerTexture {
                 0, rows, 
                 excess, 1, 
                 this.srcFormat, this.gl.UNSIGNED_INT, data.subarray(rows * this.elements * this.width));
+        }
+    }
+
+    update = (data: Uint32Array, start: number, end: number): void => {
+        let count = end - start;
+
+        let startY = Math.floor(start / this.width);
+        let startX = start - startY * this.width;
+        let startLength = startX === 0 ? 0 : (this.width - startX);
+
+        this.gl.activeTexture(this.gl.TEXTURE0 + this.textureUnit);
+
+        if (count <= startLength) {
+            this.gl.texSubImage2D(this.gl.TEXTURE_2D, 
+                0, 
+                startX, startY, 
+                count, 1, 
+                this.srcFormat, this.gl.UNSIGNED_INT, data.subarray(start * this.elements, end * this.elements));
+        } else {
+            
+            if (startLength > 0) {
+                this.gl.texSubImage2D(this.gl.TEXTURE_2D, 
+                    0, 
+                    startX, startY, 
+                    startLength, 1, 
+                    this.srcFormat, this.gl.UNSIGNED_INT, data.subarray(start * this.elements, (start + startLength) * this.elements));
+                startY += 1;
+            }
+            
+            let endX = end % this.width;
+            let endY = Math.floor(end / this.width);
+            if (endX > 0) {
+                this.gl.texSubImage2D(this.gl.TEXTURE_2D, 
+                    0, 
+                    0, endY, 
+                    endX, 1, 
+                    this.srcFormat, this.gl.UNSIGNED_INT, data.subarray((end - endX) * this.elements));
+            }
+
+            if (endY > startY) {
+                this.gl.texSubImage2D(this.gl.TEXTURE_2D, 
+                    0, 
+                    0, startY, 
+                    this.width, endY - startY, 
+                    this.srcFormat, this.gl.UNSIGNED_INT, data.subarray((start + startLength) * this.elements, (end - endX) * this.elements));
+            }
         }
     }
 

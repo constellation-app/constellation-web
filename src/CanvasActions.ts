@@ -1,5 +1,4 @@
-import { Matrix } from './Matrix';
-import { GraphRenderer } from './GraphRenderer';
+import { Camera } from './renderer/Camera';
 
 export class FrameRateAction {
     time = -1;
@@ -22,12 +21,13 @@ export class FrameRateAction {
 
 export class RotateAction {
     time = -1;
-    viewMatrix = Matrix.createMatrix();
+    eye = new Float32Array([0, 0, 0]);
+    target = new Float32Array([0, 0, 0]);
+    up = new Float32Array([0, 1, 0]);
+    camera: Camera;
 
-    readonly graphRenderer: GraphRenderer;
-  
-    constructor(graphRenderer: GraphRenderer) {
-      this.graphRenderer = graphRenderer;
+    constructor(camera: Camera) {
+      this.camera = camera;
     }
   
     execute = (time: number): void => {
@@ -41,9 +41,8 @@ export class RotateAction {
   
     createViewMatrix = (time: number) => {
       const sin = Math.sin(time);
-      var x = sin * (sin < 0 ? 1600 : 400);
-      var z = Math.cos(time) * 400;
-      Matrix.updateViewMatrix(x, 0, z, 0, 0, 0, 0, 1, 0, this.viewMatrix);
-      this.graphRenderer.setViewMatrix(this.viewMatrix);
+      this.eye[0] = sin * (sin < 0 ? 1600 : 400);
+      this.eye[2] = Math.cos(time) * 400;
+      this.camera.lookAt(this.eye, this.target, this.up);
     }
   }

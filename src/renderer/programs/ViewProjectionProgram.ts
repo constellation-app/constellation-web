@@ -13,12 +13,10 @@ export class ViewProjectionProgram extends Program {
     }
     
     setViewMatrix = (matrix: Float32Array) => {
-        this.use();
         this.gl.uniformMatrix4fv(this.viewMatrixAttributeLocation, false, matrix);
     }
 
     setProjectionMatrix = (matrix: Float32Array) => {
-        this.use();
         this.gl.uniformMatrix4fv(this.projectionMatrixAttributeLocation, false, matrix);
     }
 }

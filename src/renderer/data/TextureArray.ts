@@ -1,4 +1,4 @@
-import { GraphRenderer } from "./GraphRenderer";
+import { GraphRenderer } from "../GraphRenderer";
 
 export class TextureArray {
     readonly gl: WebGL2RenderingContext;

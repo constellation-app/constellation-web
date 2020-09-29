@@ -1,11 +1,11 @@
-import { NodeProgram } from "./NodeProgram";
-import { LinkProgram } from "./LinkProgram";
-import { GlyphProgram } from "./GlyphProgram";
-import { FloatTexture } from "./FloatTexture";
-import { UIntegerTexture } from "./UIntegerTexture";
-import { TextureArray } from "./TextureArray";
+import { NodeProgram } from "./programs/NodeProgram";
+import { LinkProgram } from "./programs/LinkProgram";
+import { GlyphProgram } from "./programs/GlyphProgram";
+import { FloatTexture } from "./data/FloatTexture";
+import { UIntegerTexture } from "./data/UIntegerTexture";
+import { TextureArray } from "./data/TextureArray";
 import { GlyphRenderer } from './GlyphRenderer';
-import { ArrowProgram } from "./ArrowProgram";
+import { ArrowProgram } from "./programs/ArrowProgram";
 
 export class GraphRenderer {
 
@@ -30,17 +30,10 @@ export class GraphRenderer {
     private viewMatrix: Float32Array | null = null;
     private projectionMatrix: Float32Array | null = null;
 
-    private clearColor: Float32Array | null = null;
-
     private nodeCount: number = 0;
-    private nodePositions: Float32Array | null = null;
-    private nodeVisuals: Uint32Array | null = null;
-
     private linkCount: number = 0;
-    private linkPositions: Uint32Array | null = null;
-
+    
     private glyphCount: number = 0;
-    private glyphPositions: Float32Array | null = null;
     private glyphScale: number | null = 1.0;
     private glyphRenderer: GlyphRenderer | null = null;
     private glyphColor: Float32Array | null = new Float32Array([0.5, 0.5, 0.5]);
@@ -121,20 +114,25 @@ export class GraphRenderer {
     }
 
     setClearColor = (clearColor: Float32Array): void => {
-        this.clearColor = clearColor;
+        this.gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
         this.requiresUpdate = true;
     }
 
     setNodes = (nodePositions: Float32Array, nodeVisuals: Uint32Array): void => {
         this.nodeCount = nodePositions.length / this.nodePositionTexture.elements;
-        this.nodePositions = nodePositions;
-        this.nodeVisuals = nodeVisuals;
+        this.nodePositionTexture.replace(nodePositions);
+        this.nodeVisualsTexture.replace(nodeVisuals);
+        this.requiresUpdate = true;
+    }
+
+    updateNodeVisuals = (nodeVisuals: Uint32Array, start: number, end: number): void => {
+        this.nodeVisualsTexture.update(nodeVisuals, start, end);
         this.requiresUpdate = true;
     }
 
     setLinks = (linkPositions: Uint32Array): void => {
         this.linkCount = linkPositions.length / this.linkPositionTexture.elements;
-        this.linkPositions = linkPositions;
+        this.linkPositionTexture.replace(linkPositions);
         this.requiresUpdate = true;
     }
 
@@ -145,7 +143,7 @@ export class GraphRenderer {
 
     setGlyphs = (glyphPositions: Float32Array): void => {
         this.glyphCount = glyphPositions.length / this.glyphPositionTexture.elements;
-        this.glyphPositions = glyphPositions;
+        this.glyphPositionTexture.replace(glyphPositions);
         this.requiresUpdate = true;
     }
 
@@ -163,32 +161,7 @@ export class GraphRenderer {
         if (this.requiresUpdate) {
             const gl = this.gl;
 
-            // Clear the buffer - setting the clear color if it has changed.
-            if (this.clearColor) {
-                gl.clearColor(this.clearColor[0], this.clearColor[1], this.clearColor[2], this.clearColor[3]);
-                this.clearColor = null;
-            }
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-            if (this.nodePositions) {
-                this.nodePositionTexture.replace(this.nodePositions);
-                this.nodePositions = null;
-            }
-
-            if (this.nodeVisuals) {
-                this.nodeVisualsTexture.replace(this.nodeVisuals);
-                this.nodeVisuals = null;
-            }
-
-            if (this.linkPositions) {
-                this.linkPositionTexture.replace(this.linkPositions);
-                this.linkPositions = null;
-            }
-
-            if (this.glyphPositions) {
-                this.glyphPositionTexture.replace(this.glyphPositions);
-                this.glyphPositions = null;
-            }
 
             this.renderNodeProgram();
             this.renderLinkProgram();

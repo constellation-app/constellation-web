@@ -1,6 +1,20 @@
-import { BufferBuilder } from "./BufferBuilder";
+import { BufferBuilder } from "./renderer/utilities/BufferBuilder";
 
 export class TestGraphs {
+
+    static center = () => {
+        var nodePositions: number[] = [];
+        var nodeVisuals: number[] = [];
+
+        BufferBuilder.appendNodePosition(10, 0, 10, 3, nodePositions);
+        BufferBuilder.appendNodeVisuals(0, 2, 0x00FF00, false, nodeVisuals);
+
+        return {
+            nodePositions: new Float32Array(nodePositions),
+            nodeVisuals: new Uint32Array(nodeVisuals),
+            linkPositions: new Uint32Array(0)
+        };
+    }
 
     static closestNeighbours = (nodeCount: number, radius: number, transactionLength: number): any => {
 
@@ -21,7 +35,7 @@ export class TestGraphs {
                 backgroundImages[Math.floor(Math.random() * backgroundImages.length)], 
                 foregroundImages[Math.floor(Math.random() * foregroundImages.length)],
                 colors[Math.floor(Math.random() * colors.length)],
-                x < 0 && y < 0 && z < 0,
+                false,
                 nodeVisuals
             );
 

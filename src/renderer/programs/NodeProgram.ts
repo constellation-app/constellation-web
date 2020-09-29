@@ -56,7 +56,7 @@ export class NodeProgram extends ViewProjectionProgram {
           node_position.w = 1.0;
           
           node_position = view_matrix * node_position;
-
+          
           if ((node_visuals.y & SELECTED_MASK) != 0u) {
             node_position.xy += corner_offset * radius * 4.0;
             gl_Position = projection_matrix * node_position;
