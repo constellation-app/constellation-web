@@ -45,6 +45,12 @@ def get_vertex_json(obj):
              made up of attributes and data that have been linked to this
              Graph object via FKs.
     """
+    # NOTE: The slowest operation in this function seems to be the looped
+    #       calls to json.loads which seems to contribute approximately
+    #       40% of the time. I tried some optimized JSON libraries in
+    #       preference to the standard python json library but the
+    #       improvement was negligible.
+
     # Extract list of vertex attribute types that are available for the
     # graph, these are used to populate the "attrs" list found in the
     # returned dictionary.
@@ -89,6 +95,12 @@ def get_transaction_json(obj):
     made up of attributes and data that have been linked to this Graph
     object via FKs.
     """
+    # NOTE: The slowest operation in this function seems to be the looped
+    #       calls to json.loads which seems to contribute approximately
+    #       40% of the time. I tried some optimized JSON libraries in
+    #       preference to the standard python json library but the
+    #       improvement was negligible.
+
     # Extract list of transaction attribute types that are available for the
     # graph, these are used to populate the "attrs" list found in the
     # returned dictionary.
@@ -366,7 +378,7 @@ class GraphJsonTransactionsSerializer(serializers.ModelSerializer):
 
 class VertexAttribJsonSerializer(serializers.ModelSerializer):
     """
-    TODO
+    Generate JSON output for Vertex attribute definitions as used in graph JSON
     """
     type = serializers.SerializerMethodField()
     default = serializers.SerializerMethodField()
@@ -382,24 +394,25 @@ class VertexAttribJsonSerializer(serializers.ModelSerializer):
 
     def get_type(self, obj):
         """
-        TODO
-        :param obj:
-        :return:
+        Return type label
+        :param obj: Object being processed
+        :return: Objects type label
         """
         return str(obj.type_fk.label)
 
     def get_default(self, obj):
         """
-        TODO
-        :param obj:
-        :return:
+        Return default value
+        :param obj: Object being processed
+        :return: Objects default value
         """
         return attrib_str_to_value(obj.type_fk.raw_type, obj.default_str)
 
 
 class TransactionAttribJsonSerializer(serializers.ModelSerializer):
     """
-    TODO
+    Generate JSON output for Transaction attribute definitions as used in graph
+    JSON
     """
     type = serializers.SerializerMethodField()
     default = serializers.SerializerMethodField()
@@ -415,17 +428,17 @@ class TransactionAttribJsonSerializer(serializers.ModelSerializer):
 
     def get_type(self, obj):
         """
-        TODO
-        :param obj:
-        :return: JSON
+        Return type label
+        :param obj: Object being processed
+        :return: Objects type label
         """
         return str(obj.type_fk.label)
 
     def get_default(self, obj):
         """
-        TODO
-        :param obj:
-        :return:
+        Return default value
+        :param obj: Object being processed
+        :return: Objects default value
         """
         return attrib_str_to_value(obj.type_fk.raw_type, obj.default_str)
 # </editor-fold>
@@ -455,7 +468,7 @@ class VertexSerializer(serializers.ModelSerializer):
         """
         Perform processing to determine the next free vx_id value by obtaining the next_vertex_id stored in the parent
         Grapho object.
-        :param data: Vertexz data to use in create.
+        :param data: Vertex data to use in create.
         :return: OrderedDict of object values.
         """
         print("VertexSerializer.to_internal_value: data=" + str(data))

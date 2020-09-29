@@ -19,6 +19,7 @@
 import os
 import json
 import zipfile
+import datetime
 from os import path
 from rest_framework import permissions, generics
 from rest_framework.decorators import api_view
@@ -41,6 +42,11 @@ ATTRIBUTE_EDITOR_KEY_GRAPH_ID = 'graph_id'  # Key used in POST body to identify 
 ATTRIBUTE_EDITOR_KEY_VERTEX_ID = 'vx_id'  # Key used in POST body to identify vertex ID (per graph)
 ATTRIBUTE_EDITOR_KEY_TRANSACTION_ID = 'tx_id'  # Key used in POST body to identify transaction ID (per graph)
 # </editor-fold>
+
+# Configuration of how many records (ie vertexes, transactions, vertex
+# attributes, or transaction attributes) should be sent in a hit to the
+# database for creation.
+IMPORT_BATCH_SIZE = 2000
 
 
 # <editor-fold Common functions">
@@ -351,8 +357,10 @@ class GraphView(generics.RetrieveUpdateDestroyAPIView):
 class GraphJson(generics.RetrieveAPIView):
     """
     Generate a JSON representation of the selected graph.
+    Refer to get_vertex_json and get_transaction_json serializer code for
+    information on performance tuning.
     """
-    queryset = Graph.objects.all()
+    queryset = Graph.objects.prefetch_related('vertex_set', 'transaction_set')
     serializer_class = GraphJsonSerializer
 
 
@@ -380,7 +388,7 @@ class VertexesView(generics.ListCreateAPIView):
     """
     Support Create and List operations of Vertexes.
     """
-    queryset = Vertex.objects.all()
+    queryset = Vertex.objects.prefetch_related('vertex_attribs')
     serializer_class = VertexSerializer
 
 
@@ -647,34 +655,37 @@ def EditTransactionAttribute(request):
 @api_view(['POST'])
 def ImportLegacyJSON(request):
     """
-    This endpoint is provided to allow the import of legacy Graph files into the database.
-    To load a file, enter a payload such as: {"filename": "analyticgraph1.star"}
-    Where analyticgraph1.star is a file residing in the ./import subdirectory of the Docker
-    container. The easiest way to achieve this is run the batch file upload_starfile.bat supplying
-    it the full path of the file to upload. This script will output some JSON to cut and paste
-    into the payload of the POST command.
+    This endpoint is provided to allow the import of legacy Graph files into
+    the database.
+    To load a file, enter a payload such as:
+        {"filename": "analyticgraph1.star"}
+    Where analyticgraph1.star is a file residing in the ./import subdirectory
+    of the Docker container. The easiest way to achieve this is run the batch
+    file upload_starfile.bat supplying it the full path of the file to upload.
+    This script will output some JSON to cut and paste into the payload of the
+    POST command.
 
-    WARNING1: This endpoint is for development purposes only, so is not overly robust - it
-    expects valid graph file data to exist.
-    WARNING2: The upload process is a slow process, grab a coffee or a chai latte and wait a few
-    minutes.
-    WARNING3: The imported depends on attrib_type values existing for all types defined in the
-    graph file, if any don't exist, they need to manually be created first. An error will be
-    returned in the POST output highlighting the attrib_type labels that need to be created.
+    WARNING1: This endpoint is for development purposes only, so is not overly
+    robust - it expects valid graph file data to exist.
+    WARNING2: The upload process is a slow process, grab a coffee or a chai
+    latte and wait a few minutes.
+    WARNING3: The imported depends on attrib_type values existing for all types
+    defined in the graph file, if any don't exist, they need to manually be
+    created first. An error will be returned in the POST output highlighting
+    the attrib_type labels that need to be created.
     """
     if request.method == 'POST':
-        # Maintain a dictionary of known AttribType, these are the types attributes are mapped to
 
-        # Look for a "filename" key in the request.data dictionary
+        # Extract filename from the request.data dictionary and ensure it
+        # corresponds to a file
         if "filename" not in request.data:
             return Response({"Error": "filename key not found in request.data!", "data": request.data})
-
         star_filename = path.join('import', str(request.data["filename"]))
-
         if not path.isfile(star_filename):
             return Response({"Error": "supplied filename could not be found in import directory", "data": request.data})
 
-        # Unzip the star file to get its inner graph.txt
+        # Unzip the file to get its inner graph.txt which contains the JSON to
+        # import
         with zipfile.ZipFile(star_filename, 'r') as zip_ref:
             zip_ref.extractall('import')
 
@@ -683,14 +694,18 @@ def ImportLegacyJSON(request):
         f = open(json_filename, )
         data = json.load(f, encoding="utf8")
 
-        # TODO, this code currently expecting array of dictionaries
+        # Read the blocks of data from the STAR file, which provides the graph
+        # elements as an array of 'blocks'
         version_block = data[0]
         graph_block = data[1]
         vertex_block = data[2]
         transaction_block = data[3]
         meta_block = data[4]
 
-        # Ensure all attribute types are already defined
+        # Ensure all attribute types are already defined. Because the import
+        # cannot deduce the 'raw type' of defined attribute types, the user
+        # needs to make sure all the attribute types are known before the
+        # import
         missing_attribute_types = set()
         attr_types = list(AttribType.objects.all().values_list('label', flat=True))
         attr_type_error = False
@@ -713,39 +728,35 @@ def ImportLegacyJSON(request):
                 attr_type_error = True
                 missing_attribute_types.add(typename)
         if attr_type_error:
-            return Response({"Error": "Unknown attribute types specified: " + str(missing_attribute_types), "data": request.data})
+            return Response({"Error": "Unknown attribute types specified - please create using attrib_types endpoint: "
+                                      + str(missing_attribute_types), "data": request.data})
 
-        # Create a dictionary of attribute types indexed by name
+        # Create a dictionary of attribute types indexed by name to allow
+        # subsequent processing
         attr_types = {}
         attr_types_queryset = AttribType.objects.all()
         for attr in attr_types_queryset:
             attr_types[attr.label] = attr
 
+        # Handle processing of schema, create a corresponding schema if one
+        # doesn't exist
         schema = None
         if 'version' in version_block and 'schema' in version_block:
             schema_name = version_block['schema']
-
-            # Check if schema already exists
             matching_schemas = Schema.objects.filter(label=schema_name)
             if len(matching_schemas) > 0:
                 schema = matching_schemas.last()
             else:
-                # This is a schema we haven't seen before -add it
                 schema = Schema(label=schema_name)
                 schema.save()
 
-                # Now get handle to the new schema
-                new_schema = Schema.objects.last()
-
-        # If graph already exists in DB, delete all its records so it can be recreated
+        # If graph already exists in DB, delete all its records so it can be
+        # recreated
         Graph.objects.filter(title=request.data["filename"]).delete()
-        graph = Graph(title=request.data["filename"], schema_fk=schema, next_vertex_id=1)
-        graph.save()
-        graph = Graph.objects.filter(title=request.data["filename"]).last()
+        graph = Graph.objects.create(title=request.data["filename"], schema_fk=schema,
+                                     next_vertex_id=1, next_transaction_id=1)
 
-        if 'graph' in graph_block:
-            print('JSON has graph block')
-
+        # Process vertex attribute definitions
         attrs = vertex_block['vertex'][0]['attrs']
         for attr in attrs:
             label = attr['label']
@@ -753,24 +764,24 @@ def ImportLegacyJSON(request):
             descr = attr['descr'] if 'descr' in attr else None
             default_str = attr['default'] if 'default' in attr else None
             attr_type = attr_types[typename]
+            GraphAttribDefVertex.objects.create(graph_fk=graph, label=label, type_fk=attr_type,
+                                                descr=descr, default_str=default_str)
 
-            vtx_attrib = GraphAttribDefVertex(graph_fk=graph, label=label, type_fk=attr_type,
-                                              descr=descr, default_str=default_str)
-            vtx_attrib.save()
-
-        # Create a dictionary of graph vertex attributes indexed by label
-        graph_vertex_attributes = {}
+        # Create a dictionary of vertex attribute definitions just created for
+        # quick lookup when processing actual vertexes
+        graph_vertex_attribute_defs = {}
         for attr in GraphAttribDefVertex.objects.filter(graph_fk=graph):
-            graph_vertex_attributes[attr.label] = attr
+            graph_vertex_attribute_defs[attr.label] = attr
 
         # Loop through vertexes and generate them
         vertexes = vertex_block['vertex'][1]['data']
         max_vx_id = 0
         count = 0
+        django_vertexes = []
         for vtx in vertexes:
-            if divmod(count, 100)[1] == 0:
-                print(' .... adding vertex block vertexes: (' + str(count) + ' of ' + str(len(vertexes)) + ')')
             vx_id = vtx['vx_id_']
+
+            # Keep track of maximum ID to setup auto increment
             max_vx_id = max(max_vx_id, vx_id)
 
             # Add vertex attributes to rolled up vertex JSON
@@ -778,23 +789,65 @@ def ImportLegacyJSON(request):
             for attr in vtx:
                 vertex_json[attr] = vtx[attr]
 
+            # Add vertex to array pending bulk create
             vertex = Vertex(graph_fk=graph, vx_id=vx_id, attribute_json=json.dumps(vertex_json))
-            vertex.save()
-            vertex = Vertex.objects.filter(vx_id=vx_id).last()
+            django_vertexes.append(vertex)
+
+            # Manage bulk creation based on list size, chunk up into blocks of
+            # up to IMPORT_BATCH_SIZE records at a time
+            count = count + 1
+            if count >= IMPORT_BATCH_SIZE:
+                Vertex.objects.bulk_create(django_vertexes)
+                django_vertexes = []
+                count = 0
+
+        # Create any leftover records
+        if count > 0:
+            Vertex.objects.bulk_create(django_vertexes)
+
+        # Store dictionary of vertexes for this graph, used in lookups by
+        # vertex attributes and transaction endpoints
+        db_vertexes = Vertex.objects.filter(graph_fk=graph)
+        vertex_dict = {}
+        for vertex in db_vertexes:
+            vertex_dict[vertex.vx_id] = vertex
+
+        # Loop through vertex attributes and generate them
+        count = 0
+        django_vertex_attributes = []
+        for vtx in vertexes:
             for attr in vtx:
                 if attr != 'vx_id_':
-                    graph_vtx_attrib = graph_vertex_attributes[attr]
+
+                    # Find corresponding attribute definition
+                    graph_vtx_attrib = graph_vertex_attribute_defs[attr]
                     value = vtx[attr]
 
-                    # TODO: sometime string is either string or json, in this case, if its json, better to convert
-                    # TODO: to double quote JSON with json.dumps
+                    # TODO: sometime string is either string or json, in this
+                    # TODO: case, if its json, better to convert to double
+                    # TODO: quote JSON with json.dumps
                     if graph_vtx_attrib.type_fk.raw_type == AttribTypeChoice.DICT.value:
                         value = json.dumps(value)
-                    vertex_attrib = VertexAttrib(vertex_fk=vertex, attrib_fk=graph_vtx_attrib,
+                    vertex_attrib = VertexAttrib(vertex_fk=vertex_dict[vtx['vx_id_']], attrib_fk=graph_vtx_attrib,
                                                  value_str=value)
-                    vertex_attrib.save()
-            count = count + 1
+                    django_vertex_attributes.append(vertex_attrib)
+                    # Keep track of actual attributes processed rather than
+                    # vertexes, as such sometimes count will end up greater
+                    # than IMPORT_BATCH_SIZE, but not by much.
+                    count = count + 1
 
+            # Manage bulk creation based on list size, chunk up into blocks of
+            # (about) IMPORT_BATCH_SIZE records at a time
+            if count >= IMPORT_BATCH_SIZE:
+                VertexAttrib.objects.bulk_create(django_vertex_attributes)
+                django_vertex_attributes = []
+                count = 0
+
+        # Create any leftover records
+        if count > 0:
+            VertexAttrib.objects.bulk_create(django_vertex_attributes)
+
+        # Process transaction attribute definitions
         attrs = transaction_block['transaction'][0]['attrs']
         for attr in attrs:
             label = attr['label']
@@ -802,21 +855,27 @@ def ImportLegacyJSON(request):
             descr = attr['descr']
             default_str = attr['default'] if 'default' in attr else None
             attr_type = attr_types[typename]
-            trans_attrib = GraphAttribDefTrans(graph_fk=graph, label=label, type_fk=attr_type,
+            GraphAttribDefTrans.objects.create(graph_fk=graph, label=label, type_fk=attr_type,
                                                descr=descr, default_str=default_str)
-            trans_attrib.save()
+
+        # Create a dictionary of transaction attribute definitions just created for
+        # quick lookup when processing actual transactions
+        graph_transaction_attribute_defs = {}
+        for attr in GraphAttribDefTrans.objects.filter(graph_fk=graph):
+            graph_transaction_attribute_defs[attr.label] = attr
 
         # Loop through transactions and generate them
         transactions = transaction_block['transaction'][1]['data']
         max_tx_id = 0
         count = 0
+        django_transactions = []
         for trans in transactions:
-            if divmod(count, 100)[1] == 0:
-                print(' .... adding transaction block transactions: (' + str(count) + ' of ' + str(len(transactions)) + ')')
             tx_id = trans['tx_id_']
             tx_dir = trans['tx_dir_']
-            vx_src = Vertex.objects.get(vx_id=trans['vx_src_'], graph_fk=graph)
-            vx_dst = Vertex.objects.get(vx_id=trans['vx_dst_'], graph_fk=graph)
+            vx_src = vertex_dict[trans['vx_src_']]
+            vx_dst = vertex_dict[trans['vx_dst_']]
+
+            # Keep track of maximum ID to setup auto increment
             max_tx_id = max(max_tx_id, tx_id)
 
             # Add transaction attributes to rolled up transaction JSON
@@ -824,34 +883,69 @@ def ImportLegacyJSON(request):
             for attr in trans:
                 transaction_json[attr] = trans[attr]
 
-            transaction = Transaction(graph_fk=graph, tx_id=tx_id, vx_src=vx_src, vx_dst=vx_dst, tx_dir=tx_dir,
-                                      attribute_json=json.dumps(transaction_json))
-            transaction.save()
-            transaction = Transaction.objects.filter(tx_id=tx_id).last()
+            # Add transaction to array pending bulk create
+            transaction = Transaction(graph_fk=graph, tx_id=tx_id, vx_src=vx_src, vx_dst=vx_dst,
+                                      tx_dir=tx_dir, attribute_json=json.dumps(transaction_json))
+            django_transactions.append(transaction)
+
+            # Manage bulk creation based on list size, chunk up into blocks of
+            # up to IMPORT_BATCH_SIZE records at a time
+            count = count + 1
+            if count >= IMPORT_BATCH_SIZE:
+                Transaction.objects.bulk_create(django_transactions)
+                django_transactions = []
+                count = 0
+
+        # Create any leftover records
+        if count > 0:
+            Transaction.objects.bulk_create(django_transactions)
+
+        # Store dictionary of transactions for this graph, used in lookups by
+        # transaction attributes
+        db_transactions = Transaction.objects.filter(graph_fk=graph)
+        transaction_dict = {}
+        for transaction in db_transactions:
+            transaction_dict[transaction.tx_id] = transaction
+
+        # Loop through transaction attributes and generate them
+        count = 0
+        django_trans_attribs = []
+        for trans in transactions:
             for attr in trans:
                 if attr != 'tx_id_' and attr != 'vx_src_' and attr != 'vx_dst_' and attr != 'tx_dir_':
-                    graph_trans_attrib = GraphAttribDefTrans.objects.filter(label=attr).last()
+                    # Find corresponding attribute definition
+                    graph_trans_attrib = graph_transaction_attribute_defs[attr]
                     value = trans[attr]
 
-                    # TODO: sometime string is either string or json, in this case, if its json, better to convert
-                    # TODO: to double quote JSON with json.dumps
+                    # TODO: sometime string is either string or json, in this
+                    # TODO: case, if its json, better to convert to double
+                    # TODO: quote JSON with json.dumps
                     if graph_trans_attrib.type_fk.raw_type == AttribTypeChoice.DICT.value:
                         value = json.dumps(value)
-                    transaction_attrib = TransactionAttrib(transaction_fk=transaction, attrib_fk=graph_trans_attrib,
+                    transaction_attrib = TransactionAttrib(transaction_fk=transaction_dict[trans['tx_id_']], attrib_fk=graph_trans_attrib,
                                                            value_str=value)
-                    transaction_attrib.save()
-            count = count + 1
+                    django_trans_attribs.append(transaction_attrib)
+                    # Keep track of actual attributes processed rather than
+                    # transactions, as such sometimes count will end up greater
+                    # than IMPORT_BATCH_SIZE, but not by much.
+                    count = count + 1
 
-        if 'meta' in meta_block:
-            print('JSON has meta block')
+            # Manage bulk creation based on list size, chunk up into blocks of
+            # (about) IMPORT_BATCH_SIZE records at a time
+            if count >= IMPORT_BATCH_SIZE:
+                TransactionAttrib.objects.bulk_create(django_trans_attribs)
+                django_trans_attribs = []
+                count = 0
+        if count > 0:
+            TransactionAttrib.objects.bulk_create(django_trans_attribs)
 
+        # Update graph counters and cleanup
         graph.next_vertex_id = max_vx_id + 1
         graph.next_transaction_id = max_tx_id + 1
         graph.save()
-
         os.remove(json_filename)
         return Response({"message": "Completed processing import", "data": request.data})
 
-    return Response({"message": ""})
+    return Response({"Error": "Operation nor permitted"})
 
 # </editor-fold>
