@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -75,6 +76,15 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'webConstellation.wsgi.application'
+
+
+CELERY = {
+    'BROKER_URL': os.environ['CELERY_BROKER'],
+    'CELERY_IMPORTS': ('worker.tasks', ),
+    'CELERY_TASK_SERIALIZER': 'json',
+    'CELERY_RESULT_SERIALIZER': 'json',
+    'CELERY_ACCEPT_CONTENT': ['json'],
+}
 
 
 # Database

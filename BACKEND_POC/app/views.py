@@ -35,6 +35,7 @@ from app.serializers import GraphAttribDefGraphSerializer, GraphAttribDefVertexS
 from app.serializers import VertexSerializer, VertexAttribSerializer
 from app.serializers import TransactionSerializer, TransactionAttribSerializer
 from app.serializers import GraphJsonVertexesSerializer, GraphJsonTransactionsSerializer
+from worker.tasks import import_starfile_task
 
 
 # <editor-fold Constants">
@@ -674,6 +675,11 @@ def ImportLegacyJSON(request):
     created first. An error will be returned in the POST output highlighting
     the attrib_type labels that need to be created.
     """
+
+    # TODO: Placeholder - eventually import_starfile_task can contain this code to run
+    # TODO: asynchronously
+    import_starfile_task.s().delay()
+
     if request.method == 'POST':
 
         # Extract filename from the request.data dictionary and ensure it

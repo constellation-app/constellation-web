@@ -19,13 +19,14 @@
 import json
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
+from django.db.models import signals
 from django.http.request import QueryDict
 from app.models import AttribType, AttribTypeChoice, attrib_str_to_value
 from app.models import Schema, SchemaAttribDefGraph, SchemaAttribDefVertex, SchemaAttribDefTrans
 from app.models import Graph, GraphAttribDefGraph, GraphAttribDefVertex, GraphAttribDefTrans
 from app.models import Vertex, VertexAttrib
 from app.models import Transaction, TransactionAttrib
-
+from worker.tasks import graph_saved
 
 # <editor-fold Common functions">
 def get_vertex_json(obj):
@@ -501,11 +502,13 @@ class VertexSerializer(serializers.ModelSerializer):
         # Update graph to reflect the new vertex that has been added, incrementing the next_vertex_id value
         graph = instance.graph_fk
         graph.next_vertex_id = graph.next_vertex_id + 1
+        signals.post_save.disconnect(graph_saved, sender=Graph)
         graph.save()
+        signals.post_save.connect(graph_saved, sender=Graph)
 
         # Now loop through and create any VertexAttribute objects based on GraphVtxAttrib linked to parent Graph object
         # that have default values
-        graph_vertex_attributes = graph.graphvertexattrib_set.exclude(default_str__isnull=True)
+        graph_vertex_attributes = graph.graphattribdefvertex_set.exclude(default_str__isnull=True)
         for vertex_object in graph_vertex_attributes:
             vertex_attrib = VertexAttrib(vertex_fk=instance, attrib_fk=vertex_object, value_str=vertex_object.default_str)
             vertex_attrib.save()
@@ -552,7 +555,7 @@ class VertexAttribSerializer(serializers.ModelSerializer):
         """
         print("VertexAttribSerializer.create: validated_data=" + str(validated_data))
         instance = super(VertexAttribSerializer, self).create(validated_data)
-        self.update_vertex_attrib(instance.vertex_fk, instance.attrib_fk.label, instance.attrib_fk.type_fk.type, instance.value_str)
+        self.update_vertex_attrib(instance.vertex_fk, instance.attrib_fk.label, instance.attrib_fk.type_fk.raw_type, instance.value_str)
         return instance
 
     def update(self, instance, validated_data):

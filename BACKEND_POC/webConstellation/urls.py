@@ -108,6 +108,8 @@ urlpatterns = [
     # </editor-fold>
 
     # <editor-fold Transaction and TransactionAttrib URLs">
+    path('transactions/', views.TransactionsView.as_view(),
+         name='transactions'),
     path('transaction/<int:tx_id>', views.TransactionView.as_view(),
          name='transaction'),
     path('transaction_attributes/', views.TransactionAttributesView.as_view(),
@@ -141,5 +143,6 @@ urlpatterns = [
 
     # path('admin/', admin.site.urls),
     url(r'^$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+
 
 ]
