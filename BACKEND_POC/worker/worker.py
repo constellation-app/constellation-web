@@ -1,7 +1,27 @@
+"""
+ *
+ * Copyright 2010-2020 Australian Signals Directorate
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+"""
+
 import os
 import kombu
 from celery import Celery
 from django.conf import settings
+
+SUBSCRIBE_MODELS = ['Schema', 'Graph', 'Vertex', 'Transaction']
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'webConstellation.settings')
 app = Celery()
@@ -9,29 +29,30 @@ app.conf.update(settings.CELERY)
 app.autodiscover_tasks()
 
 
-SUBSCRIBE_MODELS = ['Schema', 'Graph', 'Vertex', 'Transaction']
-
-# setting publisher
 with app.pool.acquire(block=True) as conn:
 
     for model_name in SUBSCRIBE_MODELS:
+
+        # Create one exchange per 'model of interest'. Each exchange will be
+        # configured to be in fanout mode, meaning new queues can be attached
+        # to it as new clients subscribe.
         exchange = kombu.Exchange(
             name='CONSTELLATION.' + model_name,
-            type='direct',
+            type='fanout',
             durable=True,
             channel=conn,
         )
         exchange.declare()
 
-        queue = kombu.Queue(
-            name='temp_queue.' + model_name,
-            exchange=exchange,
-            routing_key=model_name,
-            channel=conn,
-            message_ttl=600,
-            queue_arguments={
-                'x-queue-type': 'classic'
-            },
-            durable=True
-        )
-        queue.declare()
+        # queue = kombu.Queue(
+        #     name='own_queue.' + model_name,
+        #     exchange=exchange,
+        #     routing_key=model_name,
+        #     channel=conn,
+        #     message_ttl=600,
+        #     queue_arguments={
+        #         'x-queue-type': 'classic'
+        #     },
+        #     durable=True
+        # )
+        # queue.declare()

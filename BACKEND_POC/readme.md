@@ -14,6 +14,9 @@ in a Python environment via a Docker image.
 <a href="https://mariadb.org/">
 <img src="https://mariadb.org/wp-content/themes/twentynineteen-child/icons/mariadb_org_rgb_h.svg" alt="Docker" width="226" height="100">
 </a>
+<a href="https://www.rabbitmq.com/">
+<img src="https://www.rabbitmq.com/img/logo-rabbitmq.svg" alt="RabbitMQ" width="226" height="100">
+</a>
 
 ## Recommendations & Assumptions
 This code has been optimized to work using PyCharm Community Edition as an IDE. While this is not
@@ -64,6 +67,29 @@ To view database content:
 4. In the shell that opens, enter "mysql -p" and enter the root password defined in**docker-compose.yml**
 5. Enter "use database docker-db";
 Use normal SQL commands to interrogate the database.
+
+## Message Broker
+The default installation integrates a RabbitMQ message broker hooked into the Django application
+using the Celery package. This implementation allows two key functionalities:
+1. long running tasks to be configured to run asynchronously. An example task **import_starfile_task**
+is found in **worker/tasks.py**. When triggered (via a call in the star file import code) a request to
+execute is placed on a queue and processed by one of the available Celery worker processes. Users can
+view the celery queues by going to **http://127.0.0.1:5555/**. Further information can be found at the
+link https://pypi.org/project/django-celery/.
+2. A set of RabbitMQ **Exchanges** are constructed that external applications can subscribe to using
+standard RabbitMQ/message broker functionality. The following exchanges are provided:
+    1. CONSTELLATION.Schema
+    2. CONSTELLATION.Graph
+    3. CONSTELLATION.Vertex
+    4. CONSTELLATION.Transaction
+3. A demo message consumer has been constructed called **sample_client.py** which can be run with the
+command **python sample_client.py** - run iin a virtual environment using the supplied **requirements.txt**
+configuration. This demo just sits in a loop and pulls messages off of the 4 identified exchanges which
+it connects to with its own message queues. This functionality somewhat mirrors how external applications
+may wish to interact with the message queue. The content supplied in the queue is essentially ID information
+identifying records that are created/modified/deleted, which would alert subscribers to changes within
+the web-constellation application and allow them to pull the changes using standard REST endpoints.
+ 
 
 ## View Models
 To autogenerate a model diagram, the **graph_models** functionlaity from **django-extensions**

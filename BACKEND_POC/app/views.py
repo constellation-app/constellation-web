@@ -19,8 +19,8 @@
 import os
 import json
 import zipfile
-import datetime
 from os import path
+from django.db.models import signals
 from rest_framework import permissions, generics
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -35,7 +35,8 @@ from app.serializers import GraphAttribDefGraphSerializer, GraphAttribDefVertexS
 from app.serializers import VertexSerializer, VertexAttribSerializer
 from app.serializers import TransactionSerializer, TransactionAttribSerializer
 from app.serializers import GraphJsonVertexesSerializer, GraphJsonTransactionsSerializer
-from worker.tasks import import_starfile_task
+from worker.tasks import *
+
 
 
 # <editor-fold Constants">
@@ -80,7 +81,9 @@ def __update_graph_attribute(graph_attribute, value):
     graph_attribute_json[graph_attribute.attrib_fk.label] = \
         attrib_str_to_value(attrib_type, value)
     graph.attribute_json = json.dumps(graph_attribute_json)
+    signals.post_save.disconnect(graph_saved, sender=Graph)
     graph.save()
+    signals.post_save.connect(graph_saved, sender=Graph)
 
 
 def __update_vertex_attribute(vertex_attribute, value):
@@ -678,7 +681,7 @@ def ImportLegacyJSON(request):
 
     # TODO: Placeholder - eventually import_starfile_task can contain this code to run
     # TODO: asynchronously
-    import_starfile_task.s().delay()
+    import_starfile_task.s('example', 'argument').delay()
 
     if request.method == 'POST':
 
@@ -758,9 +761,35 @@ def ImportLegacyJSON(request):
 
         # If graph already exists in DB, delete all its records so it can be
         # recreated
+
+        signals.post_save.disconnect(graph_saved, sender=Graph)
+        signals.post_save.disconnect(graph_attribute_saved, sender=GraphAttrib)
+        signals.post_save.disconnect(vertex_saved, sender=Vertex)
+        signals.post_save.disconnect(vertex_attribute_saved, sender=VertexAttrib)
+        signals.post_save.disconnect(transaction_saved, sender=Transaction)
+        signals.post_save.disconnect(transaction_attribute_saved, sender=TransactionAttrib)
+        signals.post_delete.disconnect(graph_deleted, sender=GraphAttrib)
+        signals.post_delete.disconnect(graph_attribute_deleted, sender=GraphAttrib)
+        signals.post_delete.disconnect(vertex_deleted, sender=Vertex)
+        signals.post_delete.disconnect(vertex_attribute_deleted, sender=VertexAttrib)
+        signals.post_delete.disconnect(transaction_deleted, sender=Transaction)
+        signals.post_delete.disconnect(transaction_attribute_deleted, sender=TransactionAttrib)
+
         Graph.objects.filter(title=request.data["filename"]).delete()
         graph = Graph.objects.create(title=request.data["filename"], schema_fk=schema,
                                      next_vertex_id=1, next_transaction_id=1)
+
+        signals.post_save.connect(graph_saved, sender=Graph)
+        signals.post_save.connect(graph_attribute_saved, sender=GraphAttrib)
+        signals.post_save.connect(vertex_saved, sender=Vertex)
+        signals.post_save.connect(vertex_attribute_saved, sender=VertexAttrib)
+        signals.post_save.connect(transaction_saved, sender=Transaction)
+        signals.post_save.connect(transaction_attribute_saved, sender=TransactionAttrib)
+        signals.post_delete.connect(graph_attribute_deleted, sender=GraphAttrib)
+        signals.post_delete.connect(vertex_deleted, sender=Vertex)
+        signals.post_delete.connect(vertex_attribute_deleted, sender=VertexAttrib)
+        signals.post_delete.connect(transaction_deleted, sender=Transaction)
+        signals.post_delete.connect(transaction_attribute_deleted, sender=TransactionAttrib)
 
         # Process vertex attribute definitions
         attrs = vertex_block['vertex'][0]['attrs']
@@ -803,13 +832,17 @@ def ImportLegacyJSON(request):
             # up to IMPORT_BATCH_SIZE records at a time
             count = count + 1
             if count >= IMPORT_BATCH_SIZE:
+                signals.post_save.disconnect(graph_saved, sender=Vertex)
                 Vertex.objects.bulk_create(django_vertexes)
+                signals.post_save.connect(graph_saved, sender=Vertex)
                 django_vertexes = []
                 count = 0
 
         # Create any leftover records
         if count > 0:
+            signals.post_save.disconnect(graph_saved, sender=Vertex)
             Vertex.objects.bulk_create(django_vertexes)
+            signals.post_save.connect(graph_saved, sender=Vertex)
 
         # Store dictionary of vertexes for this graph, used in lookups by
         # vertex attributes and transaction endpoints
@@ -845,13 +878,21 @@ def ImportLegacyJSON(request):
             # Manage bulk creation based on list size, chunk up into blocks of
             # (about) IMPORT_BATCH_SIZE records at a time
             if count >= IMPORT_BATCH_SIZE:
+                signals.post_save.disconnect(graph_saved, sender=Vertex)
+                signals.post_save.disconnect(graph_saved, sender=VertexAttrib)
                 VertexAttrib.objects.bulk_create(django_vertex_attributes)
+                signals.post_save.connect(graph_saved, sender=Vertex)
+                signals.post_save.connect(graph_saved, sender=VertexAttrib)
                 django_vertex_attributes = []
                 count = 0
 
         # Create any leftover records
         if count > 0:
+            signals.post_save.disconnect(graph_saved, sender=Vertex)
+            signals.post_save.disconnect(graph_saved, sender=VertexAttrib)
             VertexAttrib.objects.bulk_create(django_vertex_attributes)
+            signals.post_save.connect(graph_saved, sender=Vertex)
+            signals.post_save.connect(graph_saved, sender=VertexAttrib)
 
         # Process transaction attribute definitions
         attrs = transaction_block['transaction'][0]['attrs']
@@ -898,13 +939,17 @@ def ImportLegacyJSON(request):
             # up to IMPORT_BATCH_SIZE records at a time
             count = count + 1
             if count >= IMPORT_BATCH_SIZE:
+                signals.post_save.disconnect(graph_saved, sender=Transaction)
                 Transaction.objects.bulk_create(django_transactions)
+                signals.post_save.connect(graph_saved, sender=Transaction)
                 django_transactions = []
                 count = 0
 
         # Create any leftover records
         if count > 0:
+            signals.post_save.disconnect(graph_saved, sender=Transaction)
             Transaction.objects.bulk_create(django_transactions)
+            signals.post_save.connect(graph_saved, sender=Transaction)
 
         # Store dictionary of transactions for this graph, used in lookups by
         # transaction attributes
@@ -928,8 +973,8 @@ def ImportLegacyJSON(request):
                     # TODO: quote JSON with json.dumps
                     if graph_trans_attrib.type_fk.raw_type == AttribTypeChoice.DICT.value:
                         value = json.dumps(value)
-                    transaction_attrib = TransactionAttrib(transaction_fk=transaction_dict[trans['tx_id_']], attrib_fk=graph_trans_attrib,
-                                                           value_str=value)
+                    transaction_attrib = TransactionAttrib(transaction_fk=transaction_dict[trans['tx_id_']],
+                                                           attrib_fk=graph_trans_attrib, value_str=value)
                     django_trans_attribs.append(transaction_attrib)
                     # Keep track of actual attributes processed rather than
                     # transactions, as such sometimes count will end up greater
@@ -939,11 +984,19 @@ def ImportLegacyJSON(request):
             # Manage bulk creation based on list size, chunk up into blocks of
             # (about) IMPORT_BATCH_SIZE records at a time
             if count >= IMPORT_BATCH_SIZE:
+                signals.post_save.disconnect(graph_saved, sender=Transaction)
+                signals.post_save.disconnect(graph_saved, sender=TransactionAttrib)
                 TransactionAttrib.objects.bulk_create(django_trans_attribs)
+                signals.post_save.connect(graph_saved, sender=Transaction)
+                signals.post_save.connect(graph_saved, sender=TransactionAttrib)
                 django_trans_attribs = []
                 count = 0
         if count > 0:
+            signals.post_save.disconnect(graph_saved, sender=Transaction)
+            signals.post_save.disconnect(graph_saved, sender=TransactionAttrib)
             TransactionAttrib.objects.bulk_create(django_trans_attribs)
+            signals.post_save.connect(graph_saved, sender=Transaction)
+            signals.post_save.connect(graph_saved, sender=TransactionAttrib)
 
         # Update graph counters and cleanup
         graph.next_vertex_id = max_vx_id + 1
