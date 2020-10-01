@@ -19,6 +19,12 @@ export class Matrix {
     destination[2] = source[2];
   }
 
+  static copyVectorFromBuffer = (buffer: Float32Array, offset: number, destination: Float32Array): void => {
+    destination[0] = buffer[offset];
+    destination[1] = buffer[offset + 1];
+    destination[2] = buffer[offset + 2];
+  }
+
   static copyMatrix = (source: Float32Array, destination: Float32Array): void => {
     destination[0] = source[0];
     destination[1] = source[1];
@@ -136,6 +142,30 @@ export class Matrix {
     matrix[13] = -Matrix.dot(Matrix.y, eye);
     matrix[14] = -Matrix.dot(Matrix.z, eye);
     matrix[15] = 1;
+  }
+
+  static copyForwardVector = (viewMatrix: Float32Array, vector: Float32Array): void => {
+    vector[0] = -viewMatrix[2];
+    vector[1] = -viewMatrix[6];
+    vector[2] = -viewMatrix[10];
+  }
+
+  static copyUpVector = (viewMatrix: Float32Array, vector: Float32Array): void => {
+    vector[0] = viewMatrix[1];
+    vector[1] = viewMatrix[5];
+    vector[2] = viewMatrix[9];
+  }
+
+  static copyRightVector = (viewMatrix: Float32Array, vector: Float32Array): void => {
+    vector[0] = viewMatrix[0];
+    vector[1] = viewMatrix[4];
+    vector[2] = viewMatrix[8];
+  }
+
+  static copyTranslationVector = (viewMatrix: Float32Array, vector: Float32Array): void => {
+    vector[0] = viewMatrix[12];
+    vector[1] = viewMatrix[13];
+    vector[2] = viewMatrix[14];
   }
 
   static createProjectionMatrix = (fieldOfViewInRadians: number, aspectRatio: number, near: number, far: number): Float32Array => {

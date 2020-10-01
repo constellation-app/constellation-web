@@ -23,6 +23,7 @@ export class PanGesture {
         nodeHoverSelector.canvas.addEventListener('mousedown', this.handleMouseDown);
         nodeHoverSelector.canvas.addEventListener('mousemove', this.handleMouseMove);
         nodeHoverSelector.canvas.addEventListener('mouseup', this.handleMouseUp);
+        nodeHoverSelector.canvas.addEventListener('mouseout', this.handleMouseUp);
     }
 
     handleMouseDown = (event: MouseEvent): void => {

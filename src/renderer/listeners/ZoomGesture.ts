@@ -2,12 +2,17 @@ import { Matrix } from "../utilities/Matrix";
 import { NodeHoverSelector } from "./NodeHoverSelector";
 
 export class ZoomGesture {
+
+    static zoomVelocity = 0.01;
+    static safeDistance = 10.0;
+
     readonly nodeHoverSelector: NodeHoverSelector;
+
+    readonly cameraForwardVector = Matrix.createVector();
 
     readonly newEyeVector = Matrix.createVector();
     readonly newTargetVector = Matrix.createVector();
-    readonly newViewMatrix = Matrix.createMatrix();
-
+    
     constructor(nodeHoverSelector: NodeHoverSelector) {
         this.nodeHoverSelector = nodeHoverSelector;
 
@@ -16,25 +21,47 @@ export class ZoomGesture {
 
     handleScroll = (event: WheelEvent): boolean => {
         const hoverNodeId = this.nodeHoverSelector.getHoverNode();
-        const camera = this.nodeHoverSelector.camera;
-
+        
         if (hoverNodeId !== null) {
-            let dx = (this.nodeHoverSelector.nodePositions[hoverNodeId * 4] - camera.eye[0]) * event.deltaY * 0.01;
-            let dy = (this.nodeHoverSelector.nodePositions[hoverNodeId * 4 + 1] - camera.eye[1]) * event.deltaY * 0.01;
-            let dz = (this.nodeHoverSelector.nodePositions[hoverNodeId * 4 + 2] - camera.eye[2]) * event.deltaY * 0.01;
-
-            Matrix.copyVector(camera.eye, this.newEyeVector);
-            this.newEyeVector[0] += dx;
-            this.newEyeVector[1] += dy;
-            this.newEyeVector[2] += dz;
+            const camera = this.nodeHoverSelector.camera;
             
-            Matrix.copyVector(camera.target, this.newTargetVector);
-            this.newTargetVector[0] += dx;
-            this.newTargetVector[1] += dy;
-            this.newTargetVector[2] += dz;
+            // Calculate the vector from the camera eye to the camera target.
+            // Save this so that it can be restored after the zoom.
+            Matrix.subtract(camera.target, camera.eye, this.newTargetVector);
 
+            // Calculate the vector from the camera eye to the hover node
+            Matrix.copyVectorFromBuffer(this.nodeHoverSelector.nodePositions, hoverNodeId * 4, this.newEyeVector);
+            Matrix.subtract(this.newEyeVector, camera.eye, this.newEyeVector);
+
+            // Normalize the eye vector
+            const distance = Matrix.vectorLength(this.newEyeVector);
+            Matrix.scale(this.newEyeVector, 1.0 / distance, this.newEyeVector);
+
+            // Adjust the safe distance so that it applies in the direction the camera is facing rather
+            // than in the direction towards the hove node.
+            Matrix.copyForwardVector(camera.viewMatrix, this.cameraForwardVector);
+            const safeDistance = ZoomGesture.safeDistance / Matrix.dot(this.newEyeVector, this.cameraForwardVector);
+
+            // Calculate how far we should move towards the hover node.
+            let moveDistance = distance * event.deltaY * ZoomGesture.zoomVelocity;
+            
+            // If this will move the camera inside the safe distance then adjust the move distance so that
+            // it will leave the camera exactly at the safe distance
+            if (distance - moveDistance < safeDistance) {
+                moveDistance = distance - safeDistance;
+            }
+
+            // Move the eye of the camera towards the hover node.
+            Matrix.scale(this.newEyeVector, moveDistance, this.newEyeVector);
+            Matrix.add(camera.eye, this.newEyeVector, this.newEyeVector);
+            
+            // Restore the target position to what it was before the zoom relative the the eye position
+            Matrix.add(this.newTargetVector, this.newEyeVector, this.newTargetVector);
+
+            // Update the camera with the new eye and target positions.
             camera.lookAt(this.newEyeVector, this.newTargetVector, camera.up);
         }
+
         return false;
     }
 }
