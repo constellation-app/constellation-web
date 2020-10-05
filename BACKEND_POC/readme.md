@@ -17,6 +17,9 @@ in a Python environment via a Docker image.
 <a href="https://www.rabbitmq.com/">
 <img src="https://www.rabbitmq.com/img/logo-rabbitmq.svg" alt="RabbitMQ" width="226" height="100">
 </a>
+<a href="https://www.python.org/downloads/release/python-382/">
+<img src="https://www.python.org/static/img/python-logo.png" alt="Pycharm" width="300" height="80">
+</a>
 
 ## Recommendations & Assumptions
 This code has been optimized to work using PyCharm Community Edition as an IDE. While this is not
@@ -29,16 +32,17 @@ essential, it does make life much easier.
 The following steps are designed to provide a virtual environment within PyCharm that corresponds to
 the environment that is provided within the Docker container - this allows better IDE integration and
 support while developing.
-1. OpenPycharm, select Open and select the BACKEND_POC directory that this readme file is contained in.
-2. Select Ctrl-Alt-S to open the Settings->Properties for the project.
-3. In the Settings dialog, select the **Project: BACKEND_POC** and select **Python Interpreter**.
-4. Click the Gear :gear: icon and select **Add...**.
-5. Ensure **New environment** is enabled, use the default **Location** which should be a **venv** 
+1. Download <a href="https://www.python.org/downloads/release/python-382/">Python</a>
+2. OpenPycharm, select Open and select the BACKEND_POC directory that this readme file is contained in.
+3. Select Ctrl-Alt-S to open the Settings->Properties for the project.
+4. In the Settings dialog, select the **Project: BACKEND_POC** and select **Python Interpreter**.
+5. Click the Gear :gear: icon and select **Add...**.
+6. Ensure **New environment** is enabled, use the default **Location** which should be a **venv** 
 subdirectory of the BACKEND_POC directory.
-6. Point the **Base interpreter** value at the python install (most likely set by default), and press
+7. Point the **Base interpreter** value at the python install (most likely set by default), and press
 the **OK** button.
-7. Finally, to update the virtual environment to include additional required packages, open a terminal
-window from within the PyCharm project, confirm the prompt is preceeded with **(venv)** and that the
+8. Finally, to update the virtual environment to include additional required packages, open a terminal
+window from within the PyCharm project, confirm the prompt is preceded with **(venv)** and that the
 current directory is the **BACKEND_POC** directory. Enter the command  "pip install -r requirements.txt"
 to install the required Python packages.
 
