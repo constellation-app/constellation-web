@@ -72,20 +72,29 @@ To view database content:
 5. Enter "use database docker-db";
 Use normal SQL commands to interrogate the database.
 
-## Message Broker
-The default installation integrates a RabbitMQ message broker hooked into the Django application
-using the Celery package. This implementation allows two key functionalities:
+## Update Subscription
+
+### Non-Web Client Subscription
+A RabbitMQ message broker is hooked into the Django application using the Celery package. This
+implementation allows two key functionalities:
 1. long running tasks to be configured to run asynchronously. An example task **import_starfile_task**
 is found in **worker/tasks.py**. When triggered (via a call in the star file import code) a request to
 execute is placed on a queue and processed by one of the available Celery worker processes. Users can
 view the celery queues by going to **http://127.0.0.1:5555/**. Further information can be found at the
 link https://pypi.org/project/django-celery/.
 2. A set of RabbitMQ **Exchanges** are constructed that external applications can subscribe to using
-standard RabbitMQ/message broker functionality. The following exchanges are provided:
+standard RabbitMQ/message broker functionality. The following exchanges are provided allowing subscribers
+to narrow their interest into specific object types:
     1. CONSTELLATION.Schema
-    2. CONSTELLATION.Graph
-    3. CONSTELLATION.Vertex
-    4. CONSTELLATION.Transaction
+    2. CONSTELLATION.SchemaAttribDefGraph
+    3. CONSTELLATION.SchemaAttribDefVertex
+    4. CONSTELLATION.SchemaAttribDefTransaction
+    5. CONSTELLATION.Graph
+    6. CONSTELLATION.GraphAttribDefGraph
+    7. CONSTELLATION.GraphAttribDefVertex
+    8. CONSTELLATION.GraphAttribDefTransaction
+    9. CONSTELLATION.Vertex
+    10. CONSTELLATION.Transaction
 3. A demo message consumer has been constructed called **sample_client.py** which can be run with the
 command **python sample_client.py** - run iin a virtual environment using the supplied **requirements.txt**
 configuration. This demo just sits in a loop and pulls messages off of the 4 identified exchanges which
@@ -93,7 +102,15 @@ it connects to with its own message queues. This functionality somewhat mirrors 
 may wish to interact with the message queue. The content supplied in the queue is essentially ID information
 identifying records that are created/modified/deleted, which would alert subscribers to changes within
 the web-constellation application and allow them to pull the changes using standard REST endpoints.
- 
+
+### Web Client Subscriptions 
+Similar to above a web socket endpoint has also been developed utilizing the django_channels package tied
+to a redis queue. The endpoint is found at ./ws/updates URL, ie for localhost, the URL: 
+ws://127.0.0.1:8000/ws/updates/ is used. Updates for all data types are posted to this web socket, rather
+than broken up as per the non-web client subscriber. An example client is provided containing appropriate
+javascript to subscribe to updates, this can be found in the file **example_websocket_client.html** and
+can opened to view a summary of updates as they occur. Refreshing this file in the browser after restarting
+the backend is required.
 
 ## View Models
 To autogenerate a model diagram, the **graph_models** functionlaity from **django-extensions**
