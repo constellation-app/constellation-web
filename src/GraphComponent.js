@@ -15,11 +15,12 @@ import { Camera } from './renderer/Camera';
 import { NodeHoverSelector } from './renderer/listeners/NodeHoverSelector';
 import { ZoomGesture } from './renderer/listeners/ZoomGesture';
 import { PanGesture } from './renderer/listeners/PanGesture';
+import { NodeClickSelector } from './renderer/listeners/NodeClickSelector';
+import { Rotator } from './renderer/listeners/Rotator';
 
 class GraphComponent extends Component {
 
     canvasRef = React.createRef();
-    camera = null;
     
     componentDidMount = () => {     
 
@@ -32,20 +33,14 @@ class GraphComponent extends Component {
       var { nodePositions, nodeVisuals, linkPositions } = TestGraphs.closestNeighbours(nodeCount, graphRadius, linkLength);
       // var { nodePositions, nodeVisuals, linkPositions } = TestGraphs.center();
       
-      this.nodePositions = nodePositions;
-      this.nodeVisuals = nodeVisuals;
-      
       const graphRenderer = new GraphRenderer(gl);
 
-      this.camera = new Camera(graphRenderer);
-      this.camera.setProjection(1024, 1024, Math.PI * 0.5, 1, 10000);
-      this.camera.lookAt(new Float32Array([400, 0, 300]), new Float32Array([0, 0, 0]), new Float32Array([0, 1, 0]));
+      const camera = new Camera(graphRenderer);
+      camera.setProjection(1024, 1024, Math.PI * 0.5, 1, 10000);
+      camera.lookAt(new Float32Array([400, 0, 300]), new Float32Array([0, 0, 0]), new Float32Array([0, 1, 0]));
 
       graphRenderer.setNodes(nodePositions, nodeVisuals);
       graphRenderer.setLinks(linkPositions);
-      graphRenderer.setGlyphScale(3);
-
-      this.graphRenderer = graphRenderer;
 
       var glyphRenderer = new GlyphRenderer(36, 'NotoSansSC-Black.otf', 2, (error) => {
         graphRenderer.setGlyphRenderer(glyphRenderer);
@@ -53,9 +48,12 @@ class GraphComponent extends Component {
         const glyphs = [];
         const labels = ["这是什么", "abcdefghijklmnopqrstuvwxyz", "يونيكود.", "Node"];
         for (var i = 0; i < nodeCount; i++) {
-          const label = Math.floor(Math.random() * labels.length);
-          glyphRenderer.renderText(i, labels[label] + "-" + i, glyphs);
+          const label1 = Math.floor(Math.random() * labels.length);
+          glyphRenderer.renderText(i, 0, labels[label1] + "-" + i, glyphs);
+          const label2 = Math.floor(Math.random() * labels.length);
+          glyphRenderer.renderText(i, -1, labels[label2] + "-" + i, glyphs);
         }
+        graphRenderer.setGlyphScale(3);
         graphRenderer.setGlyphs(new Float32Array(glyphs));
         graphRenderer.setGlyphColor(new Float32Array([1, 1, 0]));
       });
@@ -70,24 +68,20 @@ class GraphComponent extends Component {
       };
 
       controller.updateSize = (width, height) => {
-        this.camera.setSize(width, height);
+        camera.setSize(width, height);
       };
 
       controller.start();
 
-      // new Trackball(this.canvasRef.current, this.camera);
-      const nodeHoverSelector = new NodeHoverSelector(this.canvasRef.current, this.camera, this.graphRenderer, this.nodePositions, this.nodeVisuals, true);
+      // new Trackball(this.canvasRef.current, camera);
+      
+      const nodeHoverSelector = new NodeHoverSelector(this.canvasRef.current, camera, graphRenderer, nodePositions, nodeVisuals, true);
       new ZoomGesture(nodeHoverSelector);
       new PanGesture(nodeHoverSelector);
-    }
 
-    clickHandler = (event) => {
-      const selectedId = Selector.selectNode(event.clientX, event.clientY, this.camera, this.nodePositions);
-      if (selectedId) {
-        console.log(selectedId);
-        BufferBuilder.selectNode(selectedId, this.nodeVisuals);
-        this.graphRenderer.updateNodeVisuals(this.nodeVisuals, selectedId, selectedId + 1);
-      }
+      // new NodeClickSelector(this.canvasRef.current, camera, graphRenderer, nodePositions, nodeVisuals, false);
+
+      new Rotator(this.canvasRef.current, camera);
     }
 
     render() {

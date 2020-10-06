@@ -234,6 +234,21 @@ export class Matrix {
     result[2] = x * viewMatrix[2] + y * viewMatrix[6] + z * viewMatrix[10] + viewMatrix[14];
   }
 
+  static world2LocalPointInRange = (point: Float32Array, pointOffset: number, viewMatrix: Float32Array, near: number, far: number, result: Float32Array): boolean => {
+    const x = point[pointOffset + 0];
+    const y = point[pointOffset + 1];
+    const z = point[pointOffset + 2];
+
+    result[2] = x * viewMatrix[2] + y * viewMatrix[6] + z * viewMatrix[10] + viewMatrix[14];
+    if (result[2] < near && result[2] > far) {
+      result[0] = x * viewMatrix[0] + y * viewMatrix[4] + z * viewMatrix[8] + viewMatrix[12];
+      result[1] = x * viewMatrix[1] + y * viewMatrix[5] + z * viewMatrix[9] + viewMatrix[13];
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   static local2WorldPoint = (point: Float32Array, pointOffset: number, viewMatrix: Float32Array, result: Float32Array): void => {
     const x = point[pointOffset + 0] - viewMatrix[12];
     const y = point[pointOffset + 1] - viewMatrix[13];

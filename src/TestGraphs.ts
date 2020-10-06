@@ -1,6 +1,17 @@
+import { GraphRenderer } from "./renderer/GraphRenderer";
 import { BufferBuilder } from "./renderer/utilities/BufferBuilder";
 
 export class TestGraphs {
+
+    // static loadConstellationGraph = (url: string, graphRenderer: GraphRenderer): void => {
+    //     var xmlHttp = new XMLHttpRequest();
+    //     xmlHttp.onreadystatechange = function() { 
+    //         if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+    //             callback(xmlHttp.responseText);
+    //     }
+    //     xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+    //     xmlHttp.send(null);
+    // }
 
     static center = () => {
         var nodePositions: number[] = [];

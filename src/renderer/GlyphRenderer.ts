@@ -2,7 +2,8 @@ const opentype = require('opentype.js');
 
 export class GlyphRenderer {
 
-    fontSize: number;
+    readonly fontSize: number;
+
     font: any;
     glyphs: any[] = [];
     glyphFontPositions: Float32Array | null = null;
@@ -90,22 +91,27 @@ export class GlyphRenderer {
         this.glyphTextures.push(alphaChannel);
     }
 
-    renderText = (node: number, text: string, buffer: number[]): void => {
+    renderText = (node: number, line: number, text: string, buffer: number[]): void => {
         const scale = this.fontSize / (this.font.unitsPerEm * 1024);
 
         const glyphs = this.font.stringToGlyphs(text);
+
+        // Calculate the total width for this text
         var totalWidth = 0;
         for (var i = 0; i < glyphs.length; i++) {
             totalWidth += glyphs[i].advanceWidth;
         }
+
+        // Calculate the horizontal start offset so that the text is centered
         var start = totalWidth * -0.5 * scale;
         
+        // Append each glyph to the provided buffer
         for (i = 0; i < glyphs.length; i++) {
             const glyph = glyphs[i];
             buffer.push(glyph.index);
             buffer.push(node);
             buffer.push(start - this.glyphOffsets[glyph.index] / 1024);
-            buffer.push(0)
+            buffer.push(line);
             start += glyph.advanceWidth * scale;
         }
     }
