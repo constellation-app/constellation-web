@@ -17,6 +17,7 @@ import { ZoomGesture } from './renderer/listeners/ZoomGesture';
 import { PanGesture } from './renderer/listeners/PanGesture';
 import { NodeClickSelector } from './renderer/listeners/NodeClickSelector';
 import { Rotator } from './renderer/listeners/Rotator';
+import { ConstellationGraphLoader } from './ConstellationGraphLoader';
 
 class GraphComponent extends Component {
 
@@ -33,6 +34,10 @@ class GraphComponent extends Component {
       var { nodePositions, nodeVisuals, linkPositions } = TestGraphs.closestNeighbours(nodeCount, graphRadius, linkLength);
       // var { nodePositions, nodeVisuals, linkPositions } = TestGraphs.center();
       
+      // ConstellationGraphLoader.load("test_graph.json", (np, nv, labels) => {
+
+      // });
+
       const graphRenderer = new GraphRenderer(gl);
 
       const camera = new Camera(graphRenderer);

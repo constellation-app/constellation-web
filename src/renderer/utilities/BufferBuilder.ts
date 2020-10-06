@@ -1,5 +1,9 @@
 export class BufferBuilder {
 
+    static createColor = (red: number, green: number, blue: number): number => {
+        return (Math.floor(red * 255) << 16) | (Math.floor(green * 255) << 8) | Math.floor(blue * 255);
+    }
+
     static appendNodePosition = (x: number, y: number, z: number, radius: number, buffer: number[]): void => {
         buffer.push(x);
         buffer.push(y);
