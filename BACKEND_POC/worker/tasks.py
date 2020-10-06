@@ -20,7 +20,7 @@ import logging
 import time
 from celery import shared_task
 from app import models
-from worker.worker import app
+from worker.worker import EXCHANGER_NAME, app
 
 
 logger = logging.getLogger(__name__)
@@ -73,10 +73,13 @@ def publish_update(model_name, payload):
             with app.producer_pool.acquire(block=True) as producer:
                 producer.publish(
                     payload,
-                    exchange='CONSTELLATION.' + model_name,
+                    exchange=EXCHANGER_NAME,
                     routing_key=model_name,
                 )
                 success = True
         except Exception as ex:
             time.sleep(sleep_delay)
             sleep_delay = sleep_delay * 2
+            if sleep_delay > 2.0:
+                # Need to break out of loop at some point to avoid issues
+                return

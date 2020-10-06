@@ -82,26 +82,16 @@ is found in **worker/tasks.py**. When triggered (via a call in the star file imp
 execute is placed on a queue and processed by one of the available Celery worker processes. Users can
 view the celery queues by going to **http://127.0.0.1:5555/**. Further information can be found at the
 link https://pypi.org/project/django-celery/.
-2. A set of RabbitMQ **Exchanges** are constructed that external applications can subscribe to using
-standard RabbitMQ/message broker functionality. The following exchanges are provided allowing subscribers
-to narrow their interest into specific object types:
-    1. CONSTELLATION.Schema
-    2. CONSTELLATION.SchemaAttribDefGraph
-    3. CONSTELLATION.SchemaAttribDefVertex
-    4. CONSTELLATION.SchemaAttribDefTransaction
-    5. CONSTELLATION.Graph
-    6. CONSTELLATION.GraphAttribDefGraph
-    7. CONSTELLATION.GraphAttribDefVertex
-    8. CONSTELLATION.GraphAttribDefTransaction
-    9. CONSTELLATION.Vertex
-    10. CONSTELLATION.Transaction
+2. A RabbitMQ **Exchange** called **CONSTELLATION.DataUpdates** is constructed that external applications
+can subscribe to using standard RabbitMQ/message broker functionality. 
 3. A demo message consumer has been constructed called **sample_client.py** which can be run with the
-command **python sample_client.py** - run iin a virtual environment using the supplied **requirements.txt**
-configuration. This demo just sits in a loop and pulls messages off of the 4 identified exchanges which
-it connects to with its own message queues. This functionality somewhat mirrors how external applications
-may wish to interact with the message queue. The content supplied in the queue is essentially ID information
-identifying records that are created/modified/deleted, which would alert subscribers to changes within
-the web-constellation application and allow them to pull the changes using standard REST endpoints.
+command **python sample_client.py** - run in a virtual environment using the supplied **requirements.txt**
+configuration. This demo just sits in a loop and pulls messages off of the **CONSTELLATION.DataUpdates**
+exchange, which it connects to with its own message queue. This functionality somewhat mirrors how external
+applications may wish to interact with the message queue. The content supplied in the queue is essentially
+ID information identifying records that are created/modified/deleted, which would alert subscribers to
+changes within the web-constellation application and allow them to pull the changes using standard REST
+endpoints.
 
 ### Web Client Subscriptions 
 Similar to above a web socket endpoint has also been developed utilizing the django_channels package tied

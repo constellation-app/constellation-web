@@ -26,7 +26,7 @@ from app import models
 from worker import tasks
 
 # Group name used to capture list of updates and used by django_channels
-NOTIFICATION_GROUP_NAME = 'CONSTELLATION_updates'
+NOTIFICATION_GROUP_NAME = 'CONSTELLATION.DataUpdates'
 NOTIFICATION_TYPE = 'data_update'
 # Type of changes that can occur to objects
 POST = 'POST'
@@ -94,7 +94,7 @@ def schema_saved(sender, **kwargs):
     """
     schema = kwargs['instance']
     operation = POST if kwargs['created'] else UPDATE
-    payload = {'schema_id': schema.id, 'operation': operation}
+    payload = {'type': schema.__class__.__name__, 'schema_id': schema.id, 'operation': operation}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -110,7 +110,7 @@ def schema_deleted(sender, **kwargs):
     and sent to message broker.
     """
     schema = kwargs['instance']
-    payload = {'schema_id': schema.id, 'operation': DELETE}
+    payload = {'type': schema.__class__.__name__, 'schema_id': schema.id, 'operation': DELETE}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -127,7 +127,7 @@ def graph_saved(sender, **kwargs):
     """
     graph = kwargs['instance']
     operation = POST if kwargs['created'] else UPDATE
-    payload = {'graph_id': graph.id, 'operation': operation}
+    payload = {'type': graph.__class__.__name__, 'graph_id': graph.id, 'operation': operation}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -143,7 +143,7 @@ def graph_deleted(sender, **kwargs):
     and sent to message broker.
     """
     graph = kwargs['instance']
-    payload = {'graph_id': graph.id, 'operation': DELETE}
+    payload = {'type': graph.__class__.__name__, 'graph_id': graph.id, 'operation': DELETE}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -161,7 +161,8 @@ def graph_attribute_def_graph_saved(sender, **kwargs):
     attribute_def = kwargs['instance']
     graph = attribute_def.graph_fk
     operation = POST if kwargs['created'] else UPDATE
-    payload = {'graph_id': graph.id, 'graph_attribute_def_id': kwargs['instance'].id, 'operation': operation}
+    payload = {'type': attribute_def.__class__.__name__, 'graph_id': graph.id,
+               'graph_attribute_def_id': kwargs['instance'].id, 'operation': operation}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -178,7 +179,8 @@ def graph_attribute_def_graph_deleted(sender, **kwargs):
     """
     attribute_def = kwargs['instance']
     graph = attribute_def.graph_fk
-    payload = {'graph_id': graph.id, 'graph_attribute_def_id': kwargs['instance'].id, 'operation': DELETE}
+    payload = {'type': attribute_def.__class__.__name__, 'graph_id': graph.id,
+               'graph_attribute_def_id': kwargs['instance'].id, 'operation': DELETE}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -196,7 +198,8 @@ def graph_attribute_def_vertex_saved(sender, **kwargs):
     attribute_def = kwargs['instance']
     graph = attribute_def.graph_fk
     operation = POST if kwargs['created'] else UPDATE
-    payload = {'graph_id': graph.id, 'vertex_attribute_def_id': kwargs['instance'].id, 'operation': operation}
+    payload = {'type': attribute_def.__class__.__name__, 'graph_id': graph.id,
+               'vertex_attribute_def_id': kwargs['instance'].id, 'operation': operation}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -213,7 +216,8 @@ def graph_attribute_def_vertex_deleted(sender, **kwargs):
     """
     attribute_def = kwargs['instance']
     graph = attribute_def.graph_fk
-    payload = {'graph_id': graph.id, 'vertex_attribute_def_id': kwargs['instance'].id, 'operation': DELETE}
+    payload = {'type': attribute_def.__class__.__name__, 'graph_id': graph.id,
+               'vertex_attribute_def_id': kwargs['instance'].id, 'operation': DELETE}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -231,7 +235,8 @@ def graph_attribute_def_transaction_saved(sender, **kwargs):
     attribute_def = kwargs['instance']
     graph = attribute_def.graph_fk
     operation = POST if kwargs['created'] else UPDATE
-    payload = {'graph_id': graph.id, 'transaction_attribute_def_id': kwargs['instance'].id, 'operation': operation}
+    payload = {'type': attribute_def.__class__.__name__, 'graph_id': graph.id,
+               'transaction_attribute_def_id': kwargs['instance'].id, 'operation': operation}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -248,7 +253,8 @@ def graph_attribute_def_transaction_deleted(sender, **kwargs):
     """
     attribute_def = kwargs['instance']
     graph = attribute_def.graph_fk
-    payload = {'graph_id': graph.id, 'transaction_attribute_def_id': kwargs['instance'].id, 'operation': DELETE}
+    payload = {'type': attribute_def.__class__.__name__, 'graph_id': graph.id,
+               'transaction_attribute_def_id': kwargs['instance'].id, 'operation': DELETE}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -266,7 +272,8 @@ def graph_attribute_saved(sender, **kwargs):
     attribute = kwargs['instance']
     graph = attribute.graph_fk
     operation = POST if kwargs['created'] else UPDATE
-    payload = {'graph_id': graph.id, 'attribute_id': kwargs['instance'].id, 'operation': operation}
+    payload = {'type': attribute.__class__.__name__, 'graph_id': graph.id,
+               'attribute_id': kwargs['instance'].id, 'operation': operation}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -283,7 +290,8 @@ def graph_attribute_deleted(sender, **kwargs):
     """
     attribute = kwargs['instance']
     graph = attribute.graph_fk
-    payload = {'graph_id': graph.id, 'attribute_id': kwargs['instance'].id, 'operation': DELETE}
+    payload = {'type': attribute.__class__.__name__, 'graph_id': graph.id,
+               'attribute_id': kwargs['instance'].id, 'operation': DELETE}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -300,8 +308,8 @@ def vertex_saved(sender, **kwargs):
     """
     vertex = kwargs['instance']
     operation = POST if kwargs['created'] else UPDATE
-    payload = {'graph_id': vertex.graph_fk.id, 'vertex_id': vertex.id,
-               'vx_id': vertex.vx_id, 'operation': operation}
+    payload = {'type': vertex.__class__.__name__, 'graph_id': vertex.graph_fk.id,
+               'vertex_id': vertex.id, 'vx_id': vertex.vx_id, 'operation': operation}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -317,8 +325,8 @@ def vertex_deleted(sender, **kwargs):
     and sent to message broker.
     """
     vertex = kwargs['instance']
-    payload = {'graph_id': vertex.graph_fk.id, 'vertex_id': vertex.id,
-               'vx_id': vertex.vx_id, 'operation': DELETE}
+    payload = {'type': vertex.__class__.__name__, 'graph_id': vertex.graph_fk.id,
+               'vertex_id': vertex.id, 'vx_id': vertex.vx_id, 'operation': DELETE}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -333,16 +341,17 @@ def vertex_attribute_saved(sender, **kwargs):
     Hook into save event of a VertexAttrib, resulting in payload being
     constructed and sent to message broker.
     """
-    vertex = kwargs['instance'].vertex_fk
-    payload = {'graph_id': vertex.graph_fk.id, 'vertex_id': vertex.id,
-               'vx_id': vertex.vx_id, 'attribute_id': kwargs['instance'].id,
-               'operation': 'BB' + UPDATE}
+    attribute = kwargs['instance']
+    vertex = attribute.vertex_fk
+    payload = {'type': attribute.__class__.__name__, 'graph_id': vertex.graph_fk.id,
+               'vertex_id': vertex.id, 'vx_id': vertex.vx_id,
+               'attribute_id': kwargs['instance'].id, 'operation': UPDATE}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
         'message': str(payload)
     })
-    tasks.publish_update(vertex.__class__.__name__, payload)
+    tasks.publish_update(attribute.__class__.__name__, payload)
 
 
 @receiver(post_delete, sender=models.VertexAttrib)
@@ -351,16 +360,17 @@ def vertex_attribute_deleted(sender, **kwargs):
     Hook into delete event of a VertexAttrib, resulting in payload being
     constructed and sent to message broker.
     """
-    vertex = kwargs['instance'].vertex_fk
-    payload = {'graph_id': vertex.graph_fk.id, 'vertex_id': vertex.id,
-               'vx_id': vertex.vx_id, 'attribute_id': kwargs['instance'].id,
-               'operation': DELETE}
+    attribute = kwargs['instance']
+    vertex = attribute.vertex_fk
+    payload = {'type': attribute.__class__.__name__, 'graph_id': vertex.graph_fk.id,
+               'vertex_id': vertex.id, 'vx_id': vertex.vx_id,
+               'attribute_id': kwargs['instance'].id, 'operation': DELETE}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
         'message': str(payload)
     })
-    tasks.publish_update(vertex.__class__.__name__, payload)
+    tasks.publish_update(attribute.__class__.__name__, payload)
 
 
 @receiver(post_save, sender=models.Transaction)
@@ -371,8 +381,8 @@ def transaction_saved(sender, **kwargs):
     """
     transaction = kwargs['instance']
     operation = POST if kwargs['created'] else UPDATE
-    payload = {'graph_id': transaction.graph_fk.id, 'transaction_id': transaction.id,
-               'tx_id': transaction.tx_id, 'operation': operation}
+    payload = {'type': transaction.__class__.__name__, 'graph_id': transaction.graph_fk.id,
+               'transaction_id': transaction.id, 'tx_id': transaction.tx_id, 'operation': operation}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -388,8 +398,8 @@ def transaction_deleted(sender, **kwargs):
     and sent to message broker.
     """
     transaction = kwargs['instance']
-    payload = {'graph_id': transaction.graph_fk.id, 'transaction_id': transaction.id,
-               'tx_id': transaction.tx_id, 'operation': DELETE}
+    payload = {'type': transaction.__class__.__name__, 'graph_id': transaction.graph_fk.id,
+               'transaction_id': transaction.id, 'tx_id': transaction.tx_id, 'operation': DELETE}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
@@ -404,16 +414,17 @@ def transaction_attribute_saved(sender, **kwargs):
     Hook into save event of a TransactionAttrib, resulting in payload being
     constructed and sent to message broker.
     """
-    transaction = kwargs['instance'].transaction_fk
-    payload = {'graph_id': transaction.graph_fk.id, 'transaction_id': transaction.id,
-               'tx_id': transaction.tx_id, 'attribute_id': kwargs['instance'].id,
-               'operation': UPDATE}
+    attribute = kwargs['instance']
+    transaction = attribute.transaction_fk
+    payload = {'type': attribute.__class__.__name__, 'graph_id': transaction.graph_fk.id,
+               'transaction_id': transaction.id, 'tx_id': transaction.tx_id,
+               'attribute_id': kwargs['instance'].id, 'operation': UPDATE}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
         'message': str(payload)
     })
-    tasks.publish_update(transaction.__class__.__name__, payload)
+    tasks.publish_update(attribute.__class__.__name__, payload)
 
 
 @receiver(post_delete, sender=models.TransactionAttrib)
@@ -422,13 +433,14 @@ def transaction_attribute_deleted(sender, **kwargs):
     Hook into delete event of a TransactionAttrib, resulting in payload being
     constructed and sent to message broker.
     """
-    transaction = kwargs['instance'].transaction_fk
-    payload = {'graph_id': transaction.graph_fk.id, 'transaction_id': transaction.id,
-               'tx_id': transaction.tx_id, 'attribute_id': kwargs['instance'].id,
-               'operation': DELETE}
+    attribute = kwargs['instance']
+    transaction = attribute.transaction_fk
+    payload = {'type': attribute.__class__.__name__, 'graph_id': transaction.graph_fk.id,
+               'transaction_id': transaction.id, 'tx_id': transaction.tx_id,
+               'attribute_id': kwargs['instance'].id, 'operation': DELETE}
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
         'message': str(payload)
     })
-    tasks.publish_update(transaction.__class__.__name__, payload)
+    tasks.publish_update(attribute.__class__.__name__, payload)

@@ -21,8 +21,7 @@ import kombu
 from celery import Celery
 from django.conf import settings
 
-SUBSCRIBE_MODELS = ['Schema', 'Graph', 'Vertex', 'Transaction']
-
+EXCHANGER_NAME = 'CONSTELLATION.DataUpdates'
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'webConstellation.settings')
 app = Celery()
 app.conf.update(settings.CELERY)
@@ -31,15 +30,13 @@ app.autodiscover_tasks()
 
 with app.pool.acquire(block=True) as conn:
 
-    for model_name in SUBSCRIBE_MODELS:
-
-        # Create one exchange per 'model of interest'. Each exchange will be
-        # configured to be in fanout mode, meaning new queues can be attached
-        # to it as new clients subscribe.
-        exchange = kombu.Exchange(
-            name='CONSTELLATION.' + model_name,
-            type='fanout',
-            durable=True,
-            channel=conn,
-        )
-        exchange.declare()
+    # Create one exchange per 'model of interest'. Each exchange will be
+    # configured to be in fanout mode, meaning new queues can be attached
+    # to it as new clients subscribe.
+    exchange = kombu.Exchange(
+        name=EXCHANGER_NAME,
+        type='fanout',
+        durable=True,
+        channel=conn,
+    )
+    exchange.declare()
