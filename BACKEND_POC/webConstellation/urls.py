@@ -85,6 +85,10 @@ urlpatterns = [
          name='graphs'),
     path('graph/<int:pk>', views.GraphView.as_view(),
          name='graph'),
+    path('graph_attributes/', views.GraphAttributesView.as_view(),
+         name='graph_attributes'),
+    path('graph_attribute/<int:pk>', views.GraphAttributeView.as_view(),
+         name='graph_attribute'),
     # </editor-fold>
 
     # <editor-fold Graph JSON creation URLs">
@@ -99,7 +103,7 @@ urlpatterns = [
     # <editor-fold Vertex and VertexAttrib URLs">
     path('vertexes/', views.VertexesView.as_view(),
          name='vertexes'),
-    path('vertex/<int:vx_id>', views.VertexView.as_view(),
+    path('vertex/<int:pk>', views.VertexView.as_view(),
          name='vertex'),
     path('vertex_attributes/', views.VertexAttributesView.as_view(),
          name='vertex_attributes'),
@@ -110,7 +114,7 @@ urlpatterns = [
     # <editor-fold Transaction and TransactionAttrib URLs">
     path('transactions/', views.TransactionsView.as_view(),
          name='transactions'),
-    path('transaction/<int:tx_id>', views.TransactionView.as_view(),
+    path('transaction/<int:pk>', views.TransactionView.as_view(),
          name='transaction'),
     path('transaction_attributes/', views.TransactionAttributesView.as_view(),
          name='transaction_attributes'),

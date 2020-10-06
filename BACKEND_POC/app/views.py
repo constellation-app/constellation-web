@@ -30,12 +30,12 @@ from app.models import Graph, GraphAttrib, GraphAttribDefGraph, GraphAttribDefVe
 from app.models import Vertex, VertexAttrib, Transaction, TransactionAttrib
 from app.serializers import AttribTypeSerializer, SchemaSerializer
 from app.serializers import SchemaAttribDefGraphSerializer, SchemaAttribDefVertexSerializer, SchemaAttribDefTransSerializer
-from app.serializers import GraphSerializer, GraphJsonSerializer
+from app.serializers import GraphSerializer, GraphJsonSerializer, GraphAttribSerializer
 from app.serializers import GraphAttribDefGraphSerializer, GraphAttribDefVertexSerializer, GraphAttribDefTransSerializer
 from app.serializers import VertexSerializer, VertexAttribSerializer
 from app.serializers import TransactionSerializer, TransactionAttribSerializer
 from app.serializers import GraphJsonVertexesSerializer, GraphJsonTransactionsSerializer
-from worker.tasks import *
+from websockets.consumers import *
 
 
 
@@ -287,7 +287,7 @@ class SchemaView(generics.RetrieveUpdateDestroyAPIView):
 # </editor-fold>
 
 
-# <editor-fold Graph Views">
+# <editor-fold Graph and GraphAttrib views">
 class GraphsView(generics.ListCreateAPIView):
     """
     Support Create and List operations of Graph objects. The Create operation
@@ -354,6 +354,58 @@ class GraphView(generics.RetrieveUpdateDestroyAPIView):
     # TODO prevent update of Schema ?
     queryset = Graph.objects.all()
     serializer_class = GraphSerializer
+
+    def perform_destroy(self, instance):
+        """
+        An graph is being deleted, only report this deletion, and not that of
+        sub components.
+        """
+        signals.post_delete.disconnect(graph_attribute_def_graph_deleted, sender=GraphAttribDefGraph)
+        signals.post_delete.disconnect(graph_attribute_def_vertex_deleted, sender=GraphAttribDefVertex)
+        signals.post_delete.disconnect(graph_attribute_def_transaction_deleted, sender=GraphAttribDefTrans)
+        signals.post_delete.disconnect(vertex_deleted, sender=Vertex)
+        signals.post_delete.disconnect(transaction_deleted, sender=Transaction)
+        instance.delete()
+        signals.post_delete.connect(graph_attribute_def_graph_deleted, sender=GraphAttribDefGraph)
+        signals.post_delete.connect(graph_attribute_def_vertex_deleted, sender=GraphAttribDefVertex)
+        signals.post_delete.connect(graph_attribute_def_transaction_deleted, sender=GraphAttribDefTrans)
+        signals.post_delete.connect(vertex_deleted, sender=Vertex)
+        signals.post_delete.connect(transaction_deleted, sender=Transaction)
+
+
+class GraphAttributesView(generics.ListCreateAPIView):
+    """
+    Manage GraphAttrib Create and List operations. Read, Update, Destroy operations are managed in VertexAttribList.
+    """
+    queryset = GraphAttrib.objects.all()
+    serializer_class = GraphAttribSerializer
+
+
+class GraphAttributeView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Manage GraphAttrib Read, Update, Destroy operations. Create and List operations are managed in GraphAttribList.
+    """
+    queryset = GraphAttrib.objects.all()
+    serializer_class = GraphAttribSerializer
+
+    def perform_destroy(self, instance):
+        """
+        An attribute is being deleted from a graph. The parent graphs cached json needs to be updated to reflect it.
+        :param instance: The attribute being deleted
+        """
+        # Get parent graphs JSON, pop the attribute identified by its label and save to object
+        graph = instance.graph_fk
+        graph_attribute_json = json.loads(str(graph.attribute_json))
+
+        if instance.attrib_fk.label in graph_attribute_json:
+            graph_attribute_json.pop(instance.attrib_fk.label)
+        graph.attribute_json = json.dumps(graph_attribute_json)
+        signals.post_save.disconnect(graph_saved, sender=Graph)
+        graph.save()
+        signals.post_save.disconnect(graph_saved, sender=Graph)
+
+        # Delete the record
+        instance.delete()
 # </editor-fold>
 
 
@@ -402,7 +454,12 @@ class VertexView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Vertex.objects.all()
     serializer_class = VertexSerializer
-    lookup_field = 'vx_id'
+
+    def perform_destroy(self, instance):
+        # Delete the record
+        signals.post_delete.disconnect(vertex_attribute_deleted, sender=VertexAttrib)
+        instance.delete()
+        signals.post_delete.connect(vertex_attribute_deleted, sender=VertexAttrib)
 
 
 class VertexAttributesView(generics.ListCreateAPIView):
@@ -427,8 +484,10 @@ class VertexAttributeView(generics.RetrieveUpdateDestroyAPIView):
         """
         # Get parent vertexes JSON, pop the attribute identified by its label and save to object
         vertex = instance.vertex_fk
-        vertex_attribute_json = json.loads(vertex.attribute_json)
-        vertex_attribute_json.pop(instance.attrib_fk.label)
+        vertex_attribute_json = json.loads(str(vertex.attribute_json))
+
+        if instance.attrib_fk.label in vertex_attribute_json:
+            vertex_attribute_json.pop(instance.attrib_fk.label)
         vertex.attribute_json = json.dumps(vertex_attribute_json)
         vertex.save()
 
@@ -454,7 +513,6 @@ class TransactionView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
-    lookup_field = 'tx_id'
 
 
 class TransactionAttributesView(generics.ListCreateAPIView):
@@ -482,7 +540,7 @@ class TransactionAttributeView(generics.RetrieveUpdateDestroyAPIView):
         """
         # Get parent vertexes JSON, pop the attribute identified by its label and save to object
         transaction = instance.transaction_fk
-        transaction_attribute_json = json.loads(transaction.attribute_json)
+        transaction_attribute_json = json.loads(str(transaction.attribute_json))
         transaction_attribute_json.pop(instance.attrib_fk.label)
         transaction.attribute_json = json.dumps(transaction_attribute_json)
         transaction.save()
@@ -678,11 +736,6 @@ def ImportLegacyJSON(request):
     created first. An error will be returned in the POST output highlighting
     the attrib_type labels that need to be created.
     """
-
-    # TODO: Placeholder - eventually import_starfile_task can contain this code to run
-    # TODO: asynchronously
-    import_starfile_task.s('example', 'argument').delay()
-
     if request.method == 'POST':
 
         # Extract filename from the request.data dictionary and ensure it

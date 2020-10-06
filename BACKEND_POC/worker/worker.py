@@ -43,16 +43,3 @@ with app.pool.acquire(block=True) as conn:
             channel=conn,
         )
         exchange.declare()
-
-        # queue = kombu.Queue(
-        #     name='own_queue.' + model_name,
-        #     exchange=exchange,
-        #     routing_key=model_name,
-        #     channel=conn,
-        #     message_ttl=600,
-        #     queue_arguments={
-        #         'x-queue-type': 'classic'
-        #     },
-        #     durable=True
-        # )
-        # queue.declare()

@@ -23,10 +23,10 @@ from django.db.models import signals
 from django.http.request import QueryDict
 from app.models import AttribType, AttribTypeChoice, attrib_str_to_value
 from app.models import Schema, SchemaAttribDefGraph, SchemaAttribDefVertex, SchemaAttribDefTrans
-from app.models import Graph, GraphAttribDefGraph, GraphAttribDefVertex, GraphAttribDefTrans
+from app.models import Graph, GraphAttrib, GraphAttribDefGraph, GraphAttribDefVertex, GraphAttribDefTrans
 from app.models import Vertex, VertexAttrib
 from app.models import Transaction, TransactionAttrib
-from websockets.consumers import graph_saved
+from websockets.consumers import graph_saved, vertex_saved, vertex_attribute_saved, transaction_saved, transaction_attribute_saved
 
 # <editor-fold Common functions">
 def get_vertex_json(obj):
@@ -292,6 +292,69 @@ class GraphSerializer(serializers.ModelSerializer):
         model = Graph
         fields = ['id', 'title', 'schema_fk', 'next_vertex_id']
         read_only_fields = ['next_vertex_id']
+
+
+class GraphAttribSerializer(serializers.ModelSerializer):
+    """
+    Default GraphAttrib serializer. Enforces a two field uniqueness constraint across objects.
+    """
+    class Meta:
+        model = GraphAttrib
+        fields = ['id', 'graph_fk', 'attrib_fk', 'value_str']
+        validators = [
+            UniqueTogetherValidator(
+                queryset=GraphAttrib.objects.all(),
+                fields=['graph_fk', 'attrib_fk']
+            )
+        ]
+
+    @staticmethod
+    def update_graph_attrib(graph, attrib_label, attrib_type, attrib_value_str):
+        """
+        Common code to handle the propagation of to a GraphAttrib object
+        (Create or Delete) up into the parent Graph objects json field.
+
+        :param graph: Parent Graph object to update
+        :param attrib_label: Attribute label being updated
+        :param attrib_type: The type of the attribute being updated
+        :param attrib_value_str: String value of the attribute being updated
+        """
+        graph_attribute_json = json.loads(str(graph.attribute_json))
+        graph_attribute_json[attrib_label] = attrib_str_to_value(attrib_type, attrib_value_str)
+        graph.attribute_json = json.dumps(graph_attribute_json)
+        signals.post_save.disconnect(graph_saved, sender=Graph)
+        graph.save()
+        signals.post_save.connect(graph_saved, sender=Graph)
+
+    def create(self, validated_data):
+        """
+        Handle creation of a GraphAttribute. The only additional processing
+        over the base class processing is to update the parent Graph objects
+        json field to reflect the change.
+
+        :param validated_data: Validated data capturing the creation details.
+        :return: Created object instance
+        """
+        print("GraphAttribSerializer.create: validated_data=" + str(validated_data))
+        instance = super(GraphAttribSerializer, self).create(validated_data)
+        self.update_graph_attrib(instance.graph_fk, instance.attrib_fk.label, instance.attrib_fk.type_fk.raw_type,
+                                 instance.value_str)
+        return instance
+
+    def update(self, instance, validated_data):
+        """
+        Handle update of a GraphAttribute. The only additional processing over
+        the base class processing is to update the parent Graph objects json
+        field to reflect the change.
+
+        :param validated_data: Validated data capturing the creation details.
+        :return: Created object instance
+        """
+        print("GraphAttribSerializer.update: validated_data=" + str(validated_data))
+        instance = super(GraphAttribSerializer, self).update(instance, validated_data)
+        self.update_graph_attrib(instance.graph_fk, instance.attrib_fk.label, instance.attrib_fk.type_fk.raw_type,
+                                  instance.value_str)
+        return instance
 # </editor-fold>
 
 
@@ -468,17 +531,18 @@ class VertexSerializer(serializers.ModelSerializer):
     def to_internal_value(self, data):
         """
         Perform processing to determine the next free vx_id value by obtaining the next_vertex_id stored in the parent
-        Grapho object.
+        Graph object.
         :param data: Vertex data to use in create.
         :return: OrderedDict of object values.
         """
         graph = Graph.objects.get(id=data['graph_fk'])
-        if isinstance(data, QueryDict):
-            data._mutable = True
-            data['vx_id'] = graph.next_vertex_id
-            data._mutable = False
-        else:
-            data['vx_id'] = graph.next_vertex_id
+        if 'id' not in data:
+            if isinstance(data, QueryDict):
+                data._mutable = True
+                data['vx_id'] = graph.next_vertex_id
+                data._mutable = False
+            else:
+                data['vx_id'] = graph.next_vertex_id
         return super(VertexSerializer, self).to_internal_value(data)
 
     def create(self, validated_data):
@@ -498,6 +562,14 @@ class VertexSerializer(serializers.ModelSerializer):
 
         # Update graph to reflect the new vertex that has been added, incrementing the next_vertex_id value
         graph = instance.graph_fk
+
+        if isinstance(validated_data, QueryDict):
+            validated_data._mutable = True
+            validated_data['vx_id'] = graph.next_vertex_id
+            validated_data._mutable = False
+        else:
+            validated_data['vx_id'] = graph.next_vertex_id
+
         graph.next_vertex_id = graph.next_vertex_id + 1
         signals.post_save.disconnect(graph_saved, sender=Graph)
         graph.save()
@@ -506,9 +578,36 @@ class VertexSerializer(serializers.ModelSerializer):
         # Now loop through and create any VertexAttribute objects based on GraphVtxAttrib linked to parent Graph object
         # that have default values
         graph_vertex_attributes = graph.graphattribdefvertex_set.exclude(default_str__isnull=True)
+        signals.post_save.disconnect(vertex_attribute_saved, sender=VertexAttrib)
         for vertex_object in graph_vertex_attributes:
             vertex_attrib = VertexAttrib(vertex_fk=instance, attrib_fk=vertex_object, value_str=vertex_object.default_str)
             vertex_attrib.save()
+        signals.post_save.connect(vertex_attribute_saved, sender=VertexAttrib)
+        return instance
+
+    def update(self, instance, validated_data):
+        """
+        Handle update of a Vertex. This is needed to reverse changes to vx_id
+        made by the to_internal_value method.
+        :param instance: Object being updated
+        :param validated_data: Validated data capturing the creation details.
+        :return: Created object instance
+        """
+
+        # Blow away any vx_id in validated_data as this has been populated
+        # using to_internal_value (which grabs the next available). For
+        # updates the vx_id is already set so we don't want the next one. We
+        # also can't move the processing in to_internal_value as this has to
+        # happen up front before validation. A neater solution would have been
+        # to be able to detect a POST or UPDATE operation in to_internal_value
+        # but it is not aware.
+        if isinstance(validated_data, QueryDict):
+            validated_data._mutable = True
+            validated_data['vx_id'] = instance.vx_id
+            validated_data._mutable = False
+        else:
+            validated_data['vx_id'] = instance.vx_id
+        instance = super(VertexSerializer, self).update(instance, validated_data)
         return instance
 
 
@@ -537,10 +636,12 @@ class VertexAttribSerializer(serializers.ModelSerializer):
         :param attrib_type: The type of the attribute being updated
         :param attrib_value_str: String value of the attribute being updated
         """
-        vertex_attribute_json = json.loads(vertex.attribute_json)
+        vertex_attribute_json = json.loads(str(vertex.attribute_json))
         vertex_attribute_json[attrib_label] = attrib_str_to_value(attrib_type, attrib_value_str)
         vertex.attribute_json = json.dumps(vertex_attribute_json)
+        signals.post_save.disconnect(vertex_saved, sender=Vertex)
         vertex.save()
+        signals.post_save.connect(vertex_saved, sender=Vertex)
 
     def create(self, validated_data):
         """
@@ -550,7 +651,6 @@ class VertexAttribSerializer(serializers.ModelSerializer):
         :param validated_data: Validated data capturing the creation details.
         :return: Created object instance
         """
-        print("VertexAttribSerializer.create: validated_data=" + str(validated_data))
         instance = super(VertexAttribSerializer, self).create(validated_data)
         self.update_vertex_attrib(instance.vertex_fk, instance.attrib_fk.label, instance.attrib_fk.type_fk.raw_type, instance.value_str)
         return instance
@@ -563,9 +663,8 @@ class VertexAttribSerializer(serializers.ModelSerializer):
         :param validated_data: Validated data capturing the creation details.
         :return: Created object instance
         """
-        print("VertexAttribSerializer.update: validated_data=" + str(validated_data))
         instance = super(VertexAttribSerializer, self).update(instance, validated_data)
-        self.update_vertex_attrib(instance.vertex_fk, instance.attrib_fk.label, instance.attrib_fk.type_fk.type, instance.value_str)
+        self.update_vertex_attrib(instance.vertex_fk, instance.attrib_fk.label, instance.attrib_fk.type_fk.raw_type, instance.value_str)
         return instance
 # </editor-fold>
 
@@ -639,10 +738,38 @@ class TransactionSerializer(serializers.ModelSerializer):
         # GraphTransactionAttrib linked to parent Graph object that have
         # default values
         graph_transaction_attributes = graph.graphattribdeftrans_set.exclude(default_str__isnull=True)
+        signals.post_save.connect(transaction_attribute_saved, sender=TransactionAttrib)
+
         for transaction_object in graph_transaction_attributes:
             transaction_attrib = TransactionAttrib(transaction_fk=instance, attrib_fk=transaction_object,
                                                    value_str=transaction_object.default_str)
             transaction_attrib.save()
+        signals.post_save.connect(transaction_attribute_saved, sender=TransactionAttrib)
+        return instance
+
+    def update(self, instance, validated_data):
+        """
+        Handle update of a Transaction. This is needed to reverse changes to
+        tx_id made by the to_internal_value method.
+        :param instance: Object being updated
+        :param validated_data: Validated data capturing the creation details.
+        :return: Created object instance
+        """
+
+        # Blow away any tx_id in validated_data as this has been populated
+        # using to_internal_value (which grabs the next available). For
+        # updates the tx_id is already set so we don't want the next one. We
+        # also can't move the processing in to_internal_value as this has to
+        # happen up front before validation. A neater solution would have been
+        # to be able to detect a POST or UPDATE operation in to_internal_value
+        # but it is not aware.
+        if isinstance(validated_data, QueryDict):
+            validated_data._mutable = True
+            validated_data['tx_id'] = instance.tx_id
+            validated_data._mutable = False
+        else:
+            validated_data['tx_id'] = instance.tx_id
+        instance = super(TransactionSerializer, self).update(instance, validated_data)
         return instance
 
 
@@ -672,10 +799,12 @@ class TransactionAttribSerializer(serializers.ModelSerializer):
         :param attrib_type: The type of the attribute being updated
         :param attrib_value_str: String value of the attribute being updated
         """
-        transaction_attribute_json = json.loads(transaction.attribute_json)
+        transaction_attribute_json = json.loads(str(transaction.attribute_json))
         transaction_attribute_json[attrib_label] = attrib_str_to_value(attrib_type, attrib_value_str)
         transaction.attribute_json = json.dumps(transaction_attribute_json)
+        signals.post_save.disconnect(transaction_saved, sender=Transaction)
         transaction.save()
+        signals.post_save.connect(transaction_saved, sender=Transaction)
 
     def create(self, validated_data):
         """
@@ -689,7 +818,7 @@ class TransactionAttribSerializer(serializers.ModelSerializer):
         print("TransactionAttribSerializer.create: validated_data=" + str(validated_data))
         instance = super(TransactionAttribSerializer, self).create(validated_data)
         self.update_transaction_attrib(instance.transaction_fk, instance.attrib_fk.label,
-                                       instance.attrib_fk.type_fk.type, instance.value_str)
+                                       instance.attrib_fk.type_fk.raw_type, instance.value_str)
         return instance
 
     def update(self, instance, validated_data):
@@ -704,6 +833,6 @@ class TransactionAttribSerializer(serializers.ModelSerializer):
         print("TransactionAttribSerializer.update: validated_data=" + str(validated_data))
         instance = super(TransactionAttribSerializer, self).update(instance, validated_data)
         self.update_transaction_attrib(instance.transaction_fk, instance.attrib_fk.label,
-                                       instance.attrib_fk.type_fk.type, instance.value_str)
+                                       instance.attrib_fk.type_fk.raw_type, instance.value_str)
         return instance
 # </editor-fold>
