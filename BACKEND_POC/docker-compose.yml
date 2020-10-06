@@ -25,6 +25,11 @@ services:
       - 5672:5672
       - 15672:15672
 
+  redis:
+    image: redis:alpine
+    ports:
+      - 6379:6379
+
   web:
     # Define the backend web application, This will be accessed at 
     # http://127.0.0.1:8000/
@@ -41,6 +46,8 @@ services:
     depends_on:
       - db
       - broker-rabbitmq
+    links:
+      - redis
 
   worker:
     build: .

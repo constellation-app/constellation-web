@@ -26,7 +26,7 @@ from app.models import Schema, SchemaAttribDefGraph, SchemaAttribDefVertex, Sche
 from app.models import Graph, GraphAttribDefGraph, GraphAttribDefVertex, GraphAttribDefTrans
 from app.models import Vertex, VertexAttrib
 from app.models import Transaction, TransactionAttrib
-from worker.tasks import graph_saved
+from websockets.consumers import graph_saved
 
 # <editor-fold Common functions">
 def get_vertex_json(obj):
@@ -472,7 +472,6 @@ class VertexSerializer(serializers.ModelSerializer):
         :param data: Vertex data to use in create.
         :return: OrderedDict of object values.
         """
-        print("VertexSerializer.to_internal_value: data=" + str(data))
         graph = Graph.objects.get(id=data['graph_fk'])
         if isinstance(data, QueryDict):
             data._mutable = True
@@ -490,8 +489,6 @@ class VertexSerializer(serializers.ModelSerializer):
         :param validated_data:
         :return: Created Vertex instance
         """
-        print("VertexSerializer.create: validated_data=" + str(validated_data))
-
         # Get parent Graph object, used for two reasons:
         # 1) as a key to filter for candidate GraphVtxAttrib to be used as basis of VertexAttribute objects to add to
         #    the vertex
@@ -604,7 +601,6 @@ class TransactionSerializer(serializers.ModelSerializer):
         :param data: Transaction data to use in create.
         :return: OrderedDict of object values.
         """
-        print("TransactionSerializer.to_internal_value: data=" + str(data))
         graph = Graph.objects.get(id=data['graph_fk'])
         if isinstance(data, QueryDict):
             data._mutable = True
@@ -624,8 +620,6 @@ class TransactionSerializer(serializers.ModelSerializer):
         :param validated_data: ransaction data to use in create.
         :return: Created Vertex instance
         """
-        print("TransactionSerializer.create: validated_data=" + str(validated_data))
-
         # Get parent Graph object, used for two reasons:
         # 1) as a key to filter for candidate GraphTransactionttrib to be used
         #    as basis of TransactionAttribute objects to add to the vertex
@@ -637,12 +631,14 @@ class TransactionSerializer(serializers.ModelSerializer):
         # incrementing the next_transaction_id value
         graph = instance.graph_fk
         graph.next_transaction_id = graph.next_transaction_id + 1
+        signals.post_save.disconnect(graph_saved, sender=Graph)
         graph.save()
+        signals.post_save.connect(graph_saved, sender=Graph)
 
         # Now loop through and create any TransactionAttribute objects based on
         # GraphTransactionAttrib linked to parent Graph object that have
         # default values
-        graph_transaction_attributes = graph.graphtransactionattrib_set.exclude(default_str__isnull=True)
+        graph_transaction_attributes = graph.graphattribdeftrans_set.exclude(default_str__isnull=True)
         for transaction_object in graph_transaction_attributes:
             transaction_attrib = TransactionAttrib(transaction_fk=instance, attrib_fk=transaction_object,
                                                    value_str=transaction_object.default_str)

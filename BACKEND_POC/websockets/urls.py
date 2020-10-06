@@ -15,3 +15,10 @@
  * limitations under the License.
  *
 """
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.updates, name='updates'),
+]

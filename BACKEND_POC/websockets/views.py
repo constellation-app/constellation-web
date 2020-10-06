@@ -15,3 +15,12 @@
  * limitations under the License.
  *
 """
+
+from django.shortcuts import render
+
+
+def updates(request):
+    """
+    Return sample web socket consumer.
+    """
+    return render(request, 'websockets/updates.html')
