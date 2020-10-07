@@ -29,13 +29,46 @@ from app.models import Transaction, TransactionAttrib
 from websockets.consumers import graph_saved, vertex_saved, vertex_attribute_saved, transaction_saved, transaction_attribute_saved
 
 # <editor-fold Common functions">
+
+
+def get_graph_json(obj):
+    """
+    returns "graph" component of a graph JSON representation. This
+    comprises of a list containing two dictionaries as per the following
+    sample:
+        "graph": [ {
+                "attrs": [ { .. 1 or more graph attribute definitions .. } ]
+            },
+            {
+                "data": [ { .. 0 or more graph attributes .. } ]
+            }
+    :param obj: Parent Graph object.
+    :return: JSON representation of the "graph" component of the object
+             made up of attributes and data that have been linked to this
+             Graph object via FKs.
+    """
+    attrs_list = []
+    for attr in GraphAttribDefGraph.objects.filter(graph_fk=obj.id):
+        attr_data = GraphAttribJsonSerializer(attr).data
+        # Remove "default" fields that do not have a value, as per
+        # example legacy JSON
+        if attr_data['default'] is None:
+            attr_data.pop('default')
+        attrs_list.append(attr_data)
+
+    data_dict = {}
+    for attr in GraphAttrib.objects.filter(graph_fk=obj.id):
+        data_dict[attr.attrib_fk.label] = \
+            attrib_str_to_value(attr.attrib_fk.type_fk.raw_type, attr.value_str)
+    return [{"attrs": attrs_list}, {"data": [data_dict]}]
+
 def get_vertex_json(obj):
     """
     returns "vertex" component of a graph JSON representation. This
     comprises of a list containing two dictionaries as per the following
     sample:
         "vertex": [ {
-                "attrs": [ { .. 1 or more vertex attributes .. } ],
+                "attrs": [ { .. 1 or more vertex attribute definitions .. } ],
                 "key" : [ "Identifier", "Type" ]
             },
             {
@@ -85,7 +118,7 @@ def get_transaction_json(obj):
     comprises of a list containing two dictionaries as per the following
     sample:
         "transaction": [ {
-                "attrs": [ { .. 1 or more transaction attributes .. } ],
+                "attrs": [ { .. 1 or more transaction attribute definitions .. } ],
                 "key" : [ "Identifier", "Type", "DateTime" ]
             },
             {
@@ -366,12 +399,13 @@ class GraphJsonSerializer(serializers.ModelSerializer):
     the legacy systems star files.
     """
     schema = serializers.SerializerMethodField()
+    graph = serializers.SerializerMethodField()
     vertex = serializers.SerializerMethodField()
     transaction = serializers.SerializerMethodField()
 
     class Meta:
         model = Graph
-        fields = ['schema', 'vertex', 'transaction']
+        fields = ['schema', 'graph', 'vertex', 'transaction']
 
     def get_schema(self, obj):
         """
@@ -380,6 +414,14 @@ class GraphJsonSerializer(serializers.ModelSerializer):
         :return: JSON representation of Schema
         """
         return str(obj.schema_fk.label)
+
+    def get_graph(self, obj):
+        """
+        Return graph block in legacy star file format
+        :param obj: Graph model instance
+        :return: JSON representation of Schema
+        """
+        return get_graph_json(obj)
 
     def get_vertex(self, obj):
         """
@@ -438,6 +480,39 @@ class GraphJsonTransactionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Graph
         fields = ['transaction']
+
+
+class GraphAttribJsonSerializer(serializers.ModelSerializer):
+    """
+    Generate JSON output for graph attribute definitions as used in graph JSON
+    """
+    type = serializers.SerializerMethodField()
+    default = serializers.SerializerMethodField()
+    class Meta:
+        model = GraphAttribDefGraph
+        fields = ['label', 'type', 'descr', 'default']
+        validators = [
+            UniqueTogetherValidator(
+                queryset=GraphAttrib.objects.all(),
+                fields=['graph_fk', 'label']
+            )
+        ]
+
+    def get_type(self, obj):
+        """
+        Return type label
+        :param obj: Object being processed
+        :return: Objects type label
+        """
+        return str(obj.type_fk.label)
+
+    def get_default(self, obj):
+        """
+        Return default value
+        :param obj: Object being processed
+        :return: Objects default value
+        """
+        return attrib_str_to_value(obj.type_fk.raw_type, obj.default_str)
 
 
 class VertexAttribJsonSerializer(serializers.ModelSerializer):
