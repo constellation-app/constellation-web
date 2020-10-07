@@ -42,83 +42,83 @@ urlpatterns = [
     # <editor-fold AttribType URLs">
     path('attrib_types/', views.AttribTypesView.as_view(),
          name='attrib_types'),
-    path('attrib_type/<int:pk>', views.AttribTypeView.as_view(),
+    path('attrib_types/<int:pk>', views.AttribTypeView.as_view(),
          name='attrib_type'),
     # </editor-fold>
 
     # <editor-fold Attribute definition hierarchy URLs">
     path('schema_graph_attrib_defs/', views.SchemaAttribDefGraphsView.as_view(),
          name='schema_graph_attrib_defs'),
-    path('schema_graph_attrib_def/<int:pk>', views.SchemaAttribDefGraphView.as_view(),
+    path('schema_graph_attrib_defs/<int:pk>', views.SchemaAttribDefGraphView.as_view(),
          name='schema_graph_attrib_def'),
     path('schema_vertex_attrib_defs/', views.SchemaAttribDefVertexesView.as_view(),
          name='schema_vertex_attrib_defs'),
-    path('schema_vertex_attrib_def/<int:pk>', views.SchemaAttribDefVertexView.as_view(),
+    path('schema_vertex_attrib_defs/<int:pk>', views.SchemaAttribDefVertexView.as_view(),
          name='schema_vertex_attrib_def'),
     path('schema_trans_attrib_defs/', views.SchemaAttribDefTransactionsView.as_view(),
          name='schema_trans_attrib_defs'),
-    path('schema_trans_attrib_def/<int:pk>', views.SchemaAttribDefTransactionView.as_view(),
+    path('schema_trans_attrib_defs/<int:pk>', views.SchemaAttribDefTransactionView.as_view(),
          name='schema_trans_attrib_def'),
     path('graph_attrib_defs/', views.GraphAttribDefGraphsView.as_view(),
          name='graph_attrib_defs'),
-    path('graph_attrib_def/<int:pk>', views.GraphAttribDefGraphView.as_view(),
+    path('graph_attrib_defs/<int:pk>', views.GraphAttribDefGraphView.as_view(),
          name='graph_attrib_def'),
     path('vertex_attrib_defs/', views.GraphAttribDefVertexesView.as_view(),
          name='vertex_attrib_defs'),
-    path('vertex_attrib_def/<int:pk>', views.GraphAttribDefVertexView.as_view(),
+    path('vertex_attrib_defs/<int:pk>', views.GraphAttribDefVertexView.as_view(),
          name='vertex_attrib_defs'),
     path('trans_attrib_defs/', views.GraphAttribDefTransactionsView.as_view(),
          name='trans_attrib_defs'),
-    path('trans_attrib_def/<int:pk>', views.GraphAttribDefTransactionView.as_view(),
+    path('trans_attrib_defs/<int:pk>', views.GraphAttribDefTransactionView.as_view(),
          name='trans_attrib_def'),
     # </editor-fold>
 
     # <editor-fold Schema URLs">
     path('schemas/', views.SchemasView.as_view(),
          name='schemas'),
-    path('schema/<int:pk>', views.SchemaView.as_view(),
+    path('schemas/<int:pk>', views.SchemaView.as_view(),
          name='schema'),
     # </editor-fold>
 
     # <editor-fold Graph URLs">
     path('graphs/', views.GraphsView.as_view(),
          name='graphs'),
-    path('graph/<int:pk>', views.GraphView.as_view(),
+    path('graphs/<int:pk>', views.GraphView.as_view(),
          name='graph'),
     path('graph_attributes/', views.GraphAttributesView.as_view(),
          name='graph_attributes'),
-    path('graph_attribute/<int:pk>', views.GraphAttributeView.as_view(),
+    path('graph_attributes/<int:pk>', views.GraphAttributeView.as_view(),
          name='graph_attribute'),
     # </editor-fold>
 
     # <editor-fold Graph JSON creation URLs">
-    path('graph/<int:pk>/json', views.GraphJson.as_view(),
+    path('graphs/<int:pk>/json', views.GraphJson.as_view(),
          name='JSON_graph'),
-    path('graph/<int:pk>/json/vertexes', views.GraphJsonVertexes.as_view(),
+    path('graphs/<int:pk>/json/vertexes', views.GraphJsonVertexes.as_view(),
          name='JSON_graph_vertexes'),
-    path('graph/<int:pk>/json/transactions', views.GraphJsonTransactions.as_view(),
+    path('graphs/<int:pk>/json/transactions', views.GraphJsonTransactions.as_view(),
          name='JSON_graph_transactions'),
     # </editor-fold>
 
     # <editor-fold Vertex and VertexAttrib URLs">
     path('vertexes/', views.VertexesView.as_view(),
          name='vertexes'),
-    path('vertex/<int:pk>', views.VertexView.as_view(),
+    path('vertexes/<int:pk>', views.VertexView.as_view(),
          name='vertex'),
     path('vertex_attributes/', views.VertexAttributesView.as_view(),
          name='vertex_attributes'),
-    path('vertex_attribute/<int:pk>', views.VertexAttributeView.as_view(),
+    path('vertex_attributes/<int:pk>', views.VertexAttributeView.as_view(),
          name='vertex_attribute'),
     # </editor-fold>
 
     # <editor-fold Transaction and TransactionAttrib URLs">
     path('transactions/', views.TransactionsView.as_view(),
          name='transactions'),
-    path('transaction/<int:pk>', views.TransactionView.as_view(),
+    path('transactions/<int:pk>', views.TransactionView.as_view(),
          name='transaction'),
     path('transaction_attributes/', views.TransactionAttributesView.as_view(),
          name='transaction_attributes'),
-    path('transaction_attribute/<int:pk>', views.TransactionAttributeView.as_view(),
+    path('transaction_attributes/<int:pk>', views.TransactionAttributeView.as_view(),
          name='transaction_attribute'),
     # </editor-fold>
 
