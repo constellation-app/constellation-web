@@ -10,7 +10,7 @@
     Make use of contained javascript block to open a websocket to backend and process updates.<br/>
     To demonstrate, open multiple browser windows to this page, then using REST API,
     create or apply changes to Constellation data records, and view received JSON below.<br/><br/>
-    <textarea id="update-log" cols="100" rows="20"></textarea><br>
+    <textarea id="update-log" cols="140" rows="20"></textarea><br>
     <script>
         const chatSocket = new WebSocket('ws://127.0.0.1:8000/ws/updates/');
         chatSocket.onmessage = function(e) {

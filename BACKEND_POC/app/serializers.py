@@ -535,14 +535,17 @@ class VertexSerializer(serializers.ModelSerializer):
         :param data: Vertex data to use in create.
         :return: OrderedDict of object values.
         """
-        graph = Graph.objects.get(id=data['graph_fk'])
-        if 'id' not in data:
-            if isinstance(data, QueryDict):
-                data._mutable = True
-                data['vx_id'] = graph.next_vertex_id
-                data._mutable = False
-            else:
-                data['vx_id'] = graph.next_vertex_id
+        try:
+            graph = Graph.objects.get(id=data['graph_fk'])
+            if 'id' not in data :
+                if isinstance(data, QueryDict):
+                    data._mutable = True
+                    data['vx_id'] = graph.next_vertex_id
+                    data._mutable = False
+                else:
+                    data['vx_id'] = graph.next_vertex_id
+        except Graph.DoesNotExist:
+            pass
         return super(VertexSerializer, self).to_internal_value(data)
 
     def create(self, validated_data):
@@ -700,13 +703,16 @@ class TransactionSerializer(serializers.ModelSerializer):
         :param data: Transaction data to use in create.
         :return: OrderedDict of object values.
         """
-        graph = Graph.objects.get(id=data['graph_fk'])
-        if isinstance(data, QueryDict):
-            data._mutable = True
-            data['tx_id'] = graph.next_transaction_id
-            data._mutable = False
-        else:
-            data['tx_id'] = graph.next_transaction_id
+        try:
+            graph = Graph.objects.get(id=data['graph_fk'])
+            if isinstance(data, QueryDict):
+                data._mutable = True
+                data['tx_id'] = graph.next_transaction_id
+                data._mutable = False
+            else:
+                data['tx_id'] = graph.next_transaction_id
+        except Graph.DoesNotExist:
+            pass
         return super(TransactionSerializer, self).to_internal_value(data)
 
     def create(self, validated_data):
@@ -738,8 +744,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         # GraphTransactionAttrib linked to parent Graph object that have
         # default values
         graph_transaction_attributes = graph.graphattribdeftrans_set.exclude(default_str__isnull=True)
-        signals.post_save.connect(transaction_attribute_saved, sender=TransactionAttrib)
-
+        signals.post_save.disconnect(transaction_attribute_saved, sender=TransactionAttrib)
         for transaction_object in graph_transaction_attributes:
             transaction_attrib = TransactionAttrib(transaction_fk=instance, attrib_fk=transaction_object,
                                                    value_str=transaction_object.default_str)

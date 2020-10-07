@@ -196,7 +196,7 @@ class Graph(models.Model):
     associated metadata.
     """
     title = models.CharField(max_length=100, blank=False, unique=True)
-    schema_fk = models.ForeignKey(Schema, on_delete=models.CASCADE, null=True, blank=True)
+    schema_fk = models.ForeignKey(Schema, on_delete=models.SET_NULL, null=True, blank=True)
     attribute_json = models.JSONField(blank=True, default=dict)
     next_vertex_id = models.IntegerField(blank=False, null=False, default=1)
     next_transaction_id = models.IntegerField(blank=False, null=False, default=1)

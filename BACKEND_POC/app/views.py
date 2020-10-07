@@ -284,6 +284,19 @@ class SchemaView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Schema.objects.all()
     serializer_class = SchemaSerializer
+
+    def perform_destroy(self, instance):
+        """
+        An graph is being deleted, only report this deletion, and not that of
+        sub components.
+        """
+        signals.post_delete.disconnect(schema_attribute_def_graph_deleted, sender=SchemaAttribDefGraph)
+        signals.post_delete.disconnect(schema_attribute_def_vertex_deleted, sender=SchemaAttribDefVertex)
+        signals.post_delete.disconnect(schema_attribute_def_transaction_deleted, sender=SchemaAttribDefTrans)
+        instance.delete()
+        signals.post_delete.connect(schema_attribute_def_graph_deleted, sender=SchemaAttribDefGraph)
+        signals.post_delete.connect(schema_attribute_def_vertex_deleted, sender=SchemaAttribDefVertex)
+        signals.post_delete.connect(schema_attribute_def_transaction_deleted, sender=SchemaAttribDefTrans)
 # </editor-fold>
 
 
@@ -316,6 +329,7 @@ class GraphsView(generics.ListCreateAPIView):
         graph_record = Graph.objects.filter(title=request.data['title']).last()
 
         schema_graph_attribs = SchemaAttribDefGraph.objects.filter(schema_fk=schema_id)
+        signals.post_save.disconnect(graph_attribute_def_graph_saved, sender=GraphAttribDefGraph)
         for schema_attrib in schema_graph_attribs:
             graph_attrib = GraphAttribDefGraph(
                 graph_fk=graph_record,
@@ -324,8 +338,10 @@ class GraphsView(generics.ListCreateAPIView):
                 descr=schema_attrib.descr,
                 default_str=schema_attrib.default_str)
             graph_attrib.save()
+        signals.post_save.connect(graph_attribute_def_graph_saved, sender=GraphAttribDefGraph)
 
         schema_vtx_attribs = SchemaAttribDefVertex.objects.filter(schema_fk=schema_id)
+        signals.post_save.disconnect(graph_attribute_def_vertex_saved, sender=GraphAttribDefVertex)
         for schema_attrib in schema_vtx_attribs:
             graph_attrib = GraphAttribDefVertex(
                 graph_fk=graph_record,
@@ -334,8 +350,10 @@ class GraphsView(generics.ListCreateAPIView):
                 descr=schema_attrib.descr,
                 default_str=schema_attrib.default_str)
             graph_attrib.save()
+        signals.post_save.connect(graph_attribute_def_vertex_saved, sender=GraphAttribDefVertex)
 
         schema_trans_attribs = SchemaAttribDefTrans.objects.filter(schema_fk=schema_id)
+        signals.post_save.disconnect(graph_attribute_def_transaction_saved, sender=GraphAttribDefTrans)
         for schema_attrib in schema_trans_attribs:
             graph_attrib = GraphAttribDefTrans(
                 graph_fk=graph_record,
@@ -344,6 +362,7 @@ class GraphsView(generics.ListCreateAPIView):
                 descr=schema_attrib.descr,
                 default_str=schema_attrib.default_str)
             graph_attrib.save()
+        signals.post_save.connect(graph_attribute_def_transaction_saved, sender=GraphAttribDefTrans)
         return graph
 
 
@@ -489,7 +508,9 @@ class VertexAttributeView(generics.RetrieveUpdateDestroyAPIView):
         if instance.attrib_fk.label in vertex_attribute_json:
             vertex_attribute_json.pop(instance.attrib_fk.label)
         vertex.attribute_json = json.dumps(vertex_attribute_json)
+        signals.post_save.disconnect(vertex_saved, sender=Vertex)
         vertex.save()
+        signals.post_save.connect(vertex_saved, sender=Vertex)
 
         # Delete the record
         instance.delete()
@@ -513,6 +534,12 @@ class TransactionView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
+
+    def perform_destroy(self, instance):
+        # Delete the record
+        signals.post_delete.disconnect(transaction_attribute_deleted, sender=TransactionAttrib)
+        instance.delete()
+        signals.post_delete.connect(transaction_attribute_deleted, sender=TransactionAttrib)
 
 
 class TransactionAttributesView(generics.ListCreateAPIView):
@@ -541,9 +568,14 @@ class TransactionAttributeView(generics.RetrieveUpdateDestroyAPIView):
         # Get parent vertexes JSON, pop the attribute identified by its label and save to object
         transaction = instance.transaction_fk
         transaction_attribute_json = json.loads(str(transaction.attribute_json))
-        transaction_attribute_json.pop(instance.attrib_fk.label)
+
+        if instance.attrib_fk.label in transaction_attribute_json:
+            transaction_attribute_json.pop(instance.attrib_fk.label)
         transaction.attribute_json = json.dumps(transaction_attribute_json)
+
+        signals.post_save.disconnect(transaction_saved, sender=Transaction)
         transaction.save()
+        signals.post_save.connect(transaction_saved, sender=Transaction)
 
         # Delete the record
         instance.delete()
