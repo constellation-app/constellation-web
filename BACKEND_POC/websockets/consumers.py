@@ -98,7 +98,7 @@ def schema_saved(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(schema.__class__.__name__, payload)
 
@@ -114,7 +114,7 @@ def schema_deleted(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(schema.__class__.__name__, payload)
 
@@ -133,7 +133,7 @@ def schema_attribute_def_graph_saved(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute_def.__class__.__name__, payload)
 
@@ -151,7 +151,7 @@ def schema_attribute_def_graph_deleted(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute_def.__class__.__name__, payload)
 
@@ -170,7 +170,7 @@ def schema_attribute_def_vertex_saved(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute_def.__class__.__name__, payload)
 
@@ -188,7 +188,7 @@ def schema_attribute_def_vertex_deleted(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute_def.__class__.__name__, payload)
 
@@ -207,7 +207,7 @@ def schema_attribute_def_transaction_saved(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute_def.__class__.__name__, payload)
 
@@ -225,7 +225,7 @@ def schema_attribute_def_transaction_deleted(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute_def.__class__.__name__, payload)
 
@@ -242,8 +242,7 @@ def graph_saved(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
-    })
+        'message': json.dumps(payload)})
     tasks.publish_update(graph.__class__.__name__, payload)
 
 
@@ -258,7 +257,7 @@ def graph_deleted(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(graph.__class__.__name__, payload)
 
@@ -277,7 +276,7 @@ def graph_attribute_def_graph_saved(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute_def.__class__.__name__, payload)
 
@@ -295,7 +294,7 @@ def graph_attribute_def_graph_deleted(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute_def.__class__.__name__, payload)
 
@@ -314,7 +313,7 @@ def graph_attribute_def_vertex_saved(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute_def.__class__.__name__, payload)
 
@@ -332,7 +331,7 @@ def graph_attribute_def_vertex_deleted(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute_def.__class__.__name__, payload)
 
@@ -351,7 +350,7 @@ def graph_attribute_def_transaction_saved(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute_def.__class__.__name__, payload)
 
@@ -369,7 +368,7 @@ def graph_attribute_def_transaction_deleted(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute_def.__class__.__name__, payload)
 
@@ -388,7 +387,7 @@ def graph_attribute_saved(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute.__class__.__name__, payload)
 
@@ -406,7 +405,7 @@ def graph_attribute_deleted(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute.__class__.__name__, payload)
 
@@ -424,7 +423,7 @@ def vertex_saved(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(vertex.__class__.__name__, payload)
 
@@ -441,7 +440,7 @@ def vertex_deleted(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(vertex.__class__.__name__, payload)
 
@@ -461,7 +460,7 @@ def vertex_attribute_saved(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute.__class__.__name__, payload)
 
@@ -480,7 +479,7 @@ def vertex_attribute_deleted(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute.__class__.__name__, payload)
 
@@ -498,7 +497,7 @@ def transaction_saved(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(transaction.__class__.__name__, payload)
 
@@ -515,7 +514,7 @@ def transaction_deleted(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(transaction.__class__.__name__, payload)
 
@@ -535,7 +534,7 @@ def transaction_attribute_saved(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute.__class__.__name__, payload)
 
@@ -554,6 +553,6 @@ def transaction_attribute_deleted(sender, **kwargs):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(NOTIFICATION_GROUP_NAME, {
         'type': NOTIFICATION_TYPE,
-        'message': str(payload)
+        'message': json.dumps(payload)
     })
     tasks.publish_update(attribute.__class__.__name__, payload)
