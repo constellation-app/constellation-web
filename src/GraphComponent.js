@@ -18,12 +18,68 @@ import { PanGesture } from './renderer/listeners/PanGesture';
 import { NodeClickSelector } from './renderer/listeners/NodeClickSelector';
 import { Rotator } from './renderer/listeners/Rotator';
 import { ConstellationGraphLoader } from './ConstellationGraphLoader';
+import { string } from 'yargs';
 
 class GraphComponent extends Component {
 
     canvasRef = React.createRef();
+
+    constructor() {
+      super();
+      this.endpoint = "ws://127.0.0.1:8000/ws/updates/"
+      this.state = {
+        numberOfVertices: Number(),
+        currentGraphId: Number(),
+        operationType: String(),
+        graphTitle: String()
+      };
+      this.updateGraphId = this.updateGraphId.bind(this);
+    }
+
+    addWebStocket() {
+      // Initialise WebSocket
+      // This will fail if the endpoint cannot send a handshake in time (When server is not booted yet)
+      const ws = new WebSocket(this.endpoint)
+      ws.onmessage = evt =>{
+        const message = JSON.parse(evt.data)
+        const response = JSON.parse(message["message"])
+
+        this.setState(state => {
+           return {
+            currentGraphId: response["graph_id"],
+            operationType: response["operation"]
+           };
+         });
+
+         this.updateGraphDetails()
+      }
+    }
+
+    // fetches the details of the most recently updated graph
+    // and stores them in state.
+    // TODO: Currently uses next_vertex_id to determine the total count of vertices.
+    updateGraphDetails() {
+      fetch('http://127.0.0.1:8000/graphs/' + this.state.currentGraphId)
+      .then(response => response.json())
+      .then(data => 
+        this.setState(state => {
+        return {
+          numberOfVertices: data["next_vertex_id"],
+          graphTitle: data["title"]
+        };
+      })
+      )
+    }
+
+    updateGraphId(event) {
+      this.setState({currentGraphId: event.target.value}, () => {
+        this.updateGraphDetails();
+    });
+    }
     
-    componentDidMount = () => {     
+    componentDidMount = () => {    
+
+      this.addWebStocket();
 
       var controller = new CanvasController(this.canvasRef.current);
       var gl = controller.gl;
@@ -89,9 +145,25 @@ class GraphComponent extends Component {
       new Rotator(this.canvasRef.current, camera);
     }
 
-    render() {
+
+
+render() {
         return (
+          <div>
+            <label>showing most recently updated graph OR showing graph details by id</label>
+            <br/>
+            <label>Graph Title: {this.state.graphTitle}</label>
+            <br/>
+            <form>
+            <label> Graph Id: </label>
+            <input style={{width: '100px'}} type="number" value={this.state.currentGraphId} onChange={this.updateGraphId}/>
+            <br/>
+            <label>Number of Vertices: {this.state.numberOfVertices}</label>
+            <br/>
+            </form>
+            
             <canvas ref={this.canvasRef} />
+          </div>
         )
     }
 }
