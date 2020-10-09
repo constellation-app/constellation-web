@@ -1,7 +1,23 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+#Installation Guide
+To run the <b>Web Constellation</b> front end, ensure you have the prerequisites installed and continue to the instructions.
+
+<img width="100" height="100" src = "https://seeklogo.com/images/N/nodejs-logo-FBE122E377-seeklogo.com.png"/>
+<img width="100" height="100" src = "https://cdn.worldvectorlogo.com/logos/react.svg"/>
+
+##Prerequisites
+1. Download and Install [Node](https://nodejs.org/en/download/).
+
+##Instructions
+1. Clone the repository
+2. Open command prompt/powershell
+3. Navigate to the project's src folder. (..\constellation-web\src)
+4. Run `npm start`
+5. A browser window should appear and direct you to [http://localhost:3000](http://localhost:3000) 
+
 
 ## Available Scripts
 
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 In the project directory, you can run:
 
 ### `npm start`
