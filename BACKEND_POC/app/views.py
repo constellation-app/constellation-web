@@ -284,6 +284,19 @@ class SchemaView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Schema.objects.all()
     serializer_class = SchemaSerializer
+
+    def perform_destroy(self, instance):
+        """
+        An graph is being deleted, only report this deletion, and not that of
+        sub components.
+        """
+        signals.post_delete.disconnect(schema_attribute_def_graph_deleted, sender=SchemaAttribDefGraph)
+        signals.post_delete.disconnect(schema_attribute_def_vertex_deleted, sender=SchemaAttribDefVertex)
+        signals.post_delete.disconnect(schema_attribute_def_transaction_deleted, sender=SchemaAttribDefTrans)
+        instance.delete()
+        signals.post_delete.connect(schema_attribute_def_graph_deleted, sender=SchemaAttribDefGraph)
+        signals.post_delete.connect(schema_attribute_def_vertex_deleted, sender=SchemaAttribDefVertex)
+        signals.post_delete.connect(schema_attribute_def_transaction_deleted, sender=SchemaAttribDefTrans)
 # </editor-fold>
 
 
@@ -316,6 +329,7 @@ class GraphsView(generics.ListCreateAPIView):
         graph_record = Graph.objects.filter(title=request.data['title']).last()
 
         schema_graph_attribs = SchemaAttribDefGraph.objects.filter(schema_fk=schema_id)
+        signals.post_save.disconnect(graph_attribute_def_graph_saved, sender=GraphAttribDefGraph)
         for schema_attrib in schema_graph_attribs:
             graph_attrib = GraphAttribDefGraph(
                 graph_fk=graph_record,
@@ -324,8 +338,10 @@ class GraphsView(generics.ListCreateAPIView):
                 descr=schema_attrib.descr,
                 default_str=schema_attrib.default_str)
             graph_attrib.save()
+        signals.post_save.connect(graph_attribute_def_graph_saved, sender=GraphAttribDefGraph)
 
         schema_vtx_attribs = SchemaAttribDefVertex.objects.filter(schema_fk=schema_id)
+        signals.post_save.disconnect(graph_attribute_def_vertex_saved, sender=GraphAttribDefVertex)
         for schema_attrib in schema_vtx_attribs:
             graph_attrib = GraphAttribDefVertex(
                 graph_fk=graph_record,
@@ -334,8 +350,10 @@ class GraphsView(generics.ListCreateAPIView):
                 descr=schema_attrib.descr,
                 default_str=schema_attrib.default_str)
             graph_attrib.save()
+        signals.post_save.connect(graph_attribute_def_vertex_saved, sender=GraphAttribDefVertex)
 
         schema_trans_attribs = SchemaAttribDefTrans.objects.filter(schema_fk=schema_id)
+        signals.post_save.disconnect(graph_attribute_def_transaction_saved, sender=GraphAttribDefTrans)
         for schema_attrib in schema_trans_attribs:
             graph_attrib = GraphAttribDefTrans(
                 graph_fk=graph_record,
@@ -344,6 +362,7 @@ class GraphsView(generics.ListCreateAPIView):
                 descr=schema_attrib.descr,
                 default_str=schema_attrib.default_str)
             graph_attrib.save()
+        signals.post_save.connect(graph_attribute_def_transaction_saved, sender=GraphAttribDefTrans)
         return graph
 
 
@@ -489,7 +508,9 @@ class VertexAttributeView(generics.RetrieveUpdateDestroyAPIView):
         if instance.attrib_fk.label in vertex_attribute_json:
             vertex_attribute_json.pop(instance.attrib_fk.label)
         vertex.attribute_json = json.dumps(vertex_attribute_json)
+        signals.post_save.disconnect(vertex_saved, sender=Vertex)
         vertex.save()
+        signals.post_save.connect(vertex_saved, sender=Vertex)
 
         # Delete the record
         instance.delete()
@@ -513,6 +534,12 @@ class TransactionView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
+
+    def perform_destroy(self, instance):
+        # Delete the record
+        signals.post_delete.disconnect(transaction_attribute_deleted, sender=TransactionAttrib)
+        instance.delete()
+        signals.post_delete.connect(transaction_attribute_deleted, sender=TransactionAttrib)
 
 
 class TransactionAttributesView(generics.ListCreateAPIView):
@@ -541,9 +568,14 @@ class TransactionAttributeView(generics.RetrieveUpdateDestroyAPIView):
         # Get parent vertexes JSON, pop the attribute identified by its label and save to object
         transaction = instance.transaction_fk
         transaction_attribute_json = json.loads(str(transaction.attribute_json))
-        transaction_attribute_json.pop(instance.attrib_fk.label)
+
+        if instance.attrib_fk.label in transaction_attribute_json:
+            transaction_attribute_json.pop(instance.attrib_fk.label)
         transaction.attribute_json = json.dumps(transaction_attribute_json)
+
+        signals.post_save.disconnect(transaction_saved, sender=Transaction)
         transaction.save()
+        signals.post_save.connect(transaction_saved, sender=Transaction)
 
         # Delete the record
         instance.delete()
@@ -815,13 +847,9 @@ def ImportLegacyJSON(request):
         # If graph already exists in DB, delete all its records so it can be
         # recreated
 
-        signals.post_save.disconnect(graph_saved, sender=Graph)
-        signals.post_save.disconnect(graph_attribute_saved, sender=GraphAttrib)
-        signals.post_save.disconnect(vertex_saved, sender=Vertex)
-        signals.post_save.disconnect(vertex_attribute_saved, sender=VertexAttrib)
-        signals.post_save.disconnect(transaction_saved, sender=Transaction)
-        signals.post_save.disconnect(transaction_attribute_saved, sender=TransactionAttrib)
-        signals.post_delete.disconnect(graph_deleted, sender=GraphAttrib)
+        signals.post_delete.disconnect(graph_attribute_def_graph_deleted, sender=GraphAttribDefGraph)
+        signals.post_delete.disconnect(graph_attribute_def_vertex_deleted, sender=GraphAttribDefVertex)
+        signals.post_delete.disconnect(graph_attribute_def_transaction_deleted, sender=GraphAttribDefTrans)
         signals.post_delete.disconnect(graph_attribute_deleted, sender=GraphAttrib)
         signals.post_delete.disconnect(vertex_deleted, sender=Vertex)
         signals.post_delete.disconnect(vertex_attribute_deleted, sender=VertexAttrib)
@@ -832,20 +860,72 @@ def ImportLegacyJSON(request):
         graph = Graph.objects.create(title=request.data["filename"], schema_fk=schema,
                                      next_vertex_id=1, next_transaction_id=1)
 
-        signals.post_save.connect(graph_saved, sender=Graph)
-        signals.post_save.connect(graph_attribute_saved, sender=GraphAttrib)
-        signals.post_save.connect(vertex_saved, sender=Vertex)
-        signals.post_save.connect(vertex_attribute_saved, sender=VertexAttrib)
-        signals.post_save.connect(transaction_saved, sender=Transaction)
-        signals.post_save.connect(transaction_attribute_saved, sender=TransactionAttrib)
+        signals.post_delete.connect(graph_attribute_def_graph_deleted, sender=GraphAttribDefGraph)
+        signals.post_delete.connect(graph_attribute_def_vertex_deleted, sender=GraphAttribDefVertex)
+        signals.post_delete.connect(graph_attribute_def_transaction_deleted, sender=GraphAttribDefTrans)
         signals.post_delete.connect(graph_attribute_deleted, sender=GraphAttrib)
         signals.post_delete.connect(vertex_deleted, sender=Vertex)
         signals.post_delete.connect(vertex_attribute_deleted, sender=VertexAttrib)
         signals.post_delete.connect(transaction_deleted, sender=Transaction)
         signals.post_delete.connect(transaction_attribute_deleted, sender=TransactionAttrib)
 
+        # Process graph attribute definitions
+        attrs = graph_block['graph'][0]['attrs']
+        signals.post_save.disconnect(graph_attribute_def_graph_saved, sender=GraphAttribDefGraph)
+        for attr in attrs:
+            label = attr['label']
+            typename = attr['type']
+            descr = attr['descr'] if 'descr' in attr else None
+            default_str = attr['default'] if 'default' in attr else None
+            attr_type = attr_types[typename]
+            GraphAttribDefGraph.objects.create(graph_fk=graph, label=label, type_fk=attr_type,
+                                               descr=descr, default_str=default_str)
+        signals.post_save.connect(graph_attribute_def_graph_saved, sender=GraphAttribDefGraph)
+
+        # Create a dictionary of graph attribute definitions just created for
+        # quick lookup when processing actual graph
+        graph_attribute_defs = {}
+        for attr in GraphAttribDefGraph.objects.filter(graph_fk=graph):
+            graph_attribute_defs[attr.label] = attr
+
+        count = 0
+        django_attributes = []
+        graph_data = graph_block['graph'][1]['data']
+        for attr in graph_data[0]:
+            print(str(attr))
+
+            # Find corresponding attribute definition
+            graph_attrib = graph_attribute_defs[attr]
+            value = graph_data[0][attr]
+
+
+            # TODO: sometime string is either string or json, in this
+            # TODO: case, if its json, better to convert to double
+            # TODO: quote JSON with json.dumps
+            if graph_attrib.type_fk.raw_type == AttribTypeChoice.DICT.value:
+                value = json.dumps(value)
+            graph_attrib = GraphAttrib(graph_fk=graph, attrib_fk=graph_attrib,
+                                       value_str=value)
+            django_attributes.append(graph_attrib)
+            count = count + 1
+            print(str(attr) + " = " + str(graph_attrib))
+            if count >= IMPORT_BATCH_SIZE:
+                signals.post_save.disconnect(graph_saved, sender=Graph)
+                GraphAttrib.objects.bulk_create(django_attributes)
+                signals.post_save.connect(graph_saved, sender=Graph)
+                django_attributes = []
+                count = 0
+
+        # Create any leftover records
+        if count > 0:
+            signals.post_save.disconnect(graph_saved, sender=Graph)
+            GraphAttrib.objects.bulk_create(django_attributes)
+            signals.post_save.connect(graph_saved, sender=Graph)
+
+
         # Process vertex attribute definitions
         attrs = vertex_block['vertex'][0]['attrs']
+        signals.post_save.disconnect(graph_attribute_def_vertex_saved, sender=GraphAttribDefVertex)
         for attr in attrs:
             label = attr['label']
             typename = attr['type']
@@ -854,6 +934,7 @@ def ImportLegacyJSON(request):
             attr_type = attr_types[typename]
             GraphAttribDefVertex.objects.create(graph_fk=graph, label=label, type_fk=attr_type,
                                                 descr=descr, default_str=default_str)
+        signals.post_save.connect(graph_attribute_def_vertex_saved, sender=GraphAttribDefVertex)
 
         # Create a dictionary of vertex attribute definitions just created for
         # quick lookup when processing actual vertexes
@@ -885,17 +966,17 @@ def ImportLegacyJSON(request):
             # up to IMPORT_BATCH_SIZE records at a time
             count = count + 1
             if count >= IMPORT_BATCH_SIZE:
-                signals.post_save.disconnect(graph_saved, sender=Vertex)
+                signals.post_save.disconnect(vertex_saved, sender=Vertex)
                 Vertex.objects.bulk_create(django_vertexes)
-                signals.post_save.connect(graph_saved, sender=Vertex)
+                signals.post_save.connect(vertex_saved, sender=Vertex)
                 django_vertexes = []
                 count = 0
 
         # Create any leftover records
         if count > 0:
-            signals.post_save.disconnect(graph_saved, sender=Vertex)
+            signals.post_save.disconnect(vertex_saved, sender=Vertex)
             Vertex.objects.bulk_create(django_vertexes)
-            signals.post_save.connect(graph_saved, sender=Vertex)
+            signals.post_save.connect(vertex_saved, sender=Vertex)
 
         # Store dictionary of vertexes for this graph, used in lookups by
         # vertex attributes and transaction endpoints
@@ -931,24 +1012,25 @@ def ImportLegacyJSON(request):
             # Manage bulk creation based on list size, chunk up into blocks of
             # (about) IMPORT_BATCH_SIZE records at a time
             if count >= IMPORT_BATCH_SIZE:
-                signals.post_save.disconnect(graph_saved, sender=Vertex)
-                signals.post_save.disconnect(graph_saved, sender=VertexAttrib)
+                signals.post_save.disconnect(vertex_saved, sender=Vertex)
+                signals.post_save.disconnect(vertex_attribute_saved, sender=VertexAttrib)
                 VertexAttrib.objects.bulk_create(django_vertex_attributes)
-                signals.post_save.connect(graph_saved, sender=Vertex)
-                signals.post_save.connect(graph_saved, sender=VertexAttrib)
+                signals.post_save.connect(vertex_saved, sender=Vertex)
+                signals.post_save.connect(vertex_attribute_saved, sender=VertexAttrib)
                 django_vertex_attributes = []
                 count = 0
 
         # Create any leftover records
         if count > 0:
-            signals.post_save.disconnect(graph_saved, sender=Vertex)
-            signals.post_save.disconnect(graph_saved, sender=VertexAttrib)
+            signals.post_save.disconnect(vertex_saved, sender=Vertex)
+            signals.post_save.disconnect(vertex_attribute_saved, sender=VertexAttrib)
             VertexAttrib.objects.bulk_create(django_vertex_attributes)
-            signals.post_save.connect(graph_saved, sender=Vertex)
-            signals.post_save.connect(graph_saved, sender=VertexAttrib)
+            signals.post_save.connect(vertex_saved, sender=Vertex)
+            signals.post_save.connect(vertex_attribute_saved, sender=VertexAttrib)
 
         # Process transaction attribute definitions
         attrs = transaction_block['transaction'][0]['attrs']
+        signals.post_save.disconnect(graph_attribute_def_transaction_saved, sender=GraphAttribDefTrans)
         for attr in attrs:
             label = attr['label']
             typename = attr['type']
@@ -957,6 +1039,7 @@ def ImportLegacyJSON(request):
             attr_type = attr_types[typename]
             GraphAttribDefTrans.objects.create(graph_fk=graph, label=label, type_fk=attr_type,
                                                descr=descr, default_str=default_str)
+        signals.post_save.connect(graph_attribute_def_transaction_saved, sender=GraphAttribDefTrans)
 
         # Create a dictionary of transaction attribute definitions just created for
         # quick lookup when processing actual transactions
@@ -992,17 +1075,17 @@ def ImportLegacyJSON(request):
             # up to IMPORT_BATCH_SIZE records at a time
             count = count + 1
             if count >= IMPORT_BATCH_SIZE:
-                signals.post_save.disconnect(graph_saved, sender=Transaction)
+                signals.post_save.disconnect(transaction_saved, sender=Transaction)
                 Transaction.objects.bulk_create(django_transactions)
-                signals.post_save.connect(graph_saved, sender=Transaction)
+                signals.post_save.connect(transaction_saved, sender=Transaction)
                 django_transactions = []
                 count = 0
 
         # Create any leftover records
         if count > 0:
-            signals.post_save.disconnect(graph_saved, sender=Transaction)
+            signals.post_save.disconnect(transaction_saved, sender=Transaction)
             Transaction.objects.bulk_create(django_transactions)
-            signals.post_save.connect(graph_saved, sender=Transaction)
+            signals.post_save.connect(transaction_saved, sender=Transaction)
 
         # Store dictionary of transactions for this graph, used in lookups by
         # transaction attributes
@@ -1037,19 +1120,19 @@ def ImportLegacyJSON(request):
             # Manage bulk creation based on list size, chunk up into blocks of
             # (about) IMPORT_BATCH_SIZE records at a time
             if count >= IMPORT_BATCH_SIZE:
-                signals.post_save.disconnect(graph_saved, sender=Transaction)
-                signals.post_save.disconnect(graph_saved, sender=TransactionAttrib)
+                signals.post_save.disconnect(transaction_saved, sender=Transaction)
+                signals.post_save.disconnect(transaction_attribute_saved, sender=TransactionAttrib)
                 TransactionAttrib.objects.bulk_create(django_trans_attribs)
-                signals.post_save.connect(graph_saved, sender=Transaction)
-                signals.post_save.connect(graph_saved, sender=TransactionAttrib)
+                signals.post_save.connect(transaction_saved, sender=Transaction)
+                signals.post_save.connect(transaction_attribute_saved, sender=TransactionAttrib)
                 django_trans_attribs = []
                 count = 0
         if count > 0:
-            signals.post_save.disconnect(graph_saved, sender=Transaction)
-            signals.post_save.disconnect(graph_saved, sender=TransactionAttrib)
+            signals.post_save.disconnect(transaction_saved, sender=Transaction)
+            signals.post_save.disconnect(transaction_attribute_saved, sender=TransactionAttrib)
             TransactionAttrib.objects.bulk_create(django_trans_attribs)
-            signals.post_save.connect(graph_saved, sender=Transaction)
-            signals.post_save.connect(graph_saved, sender=TransactionAttrib)
+            signals.post_save.connect(transaction_saved, sender=Transaction)
+            signals.post_save.connect(transaction_attribute_saved, sender=TransactionAttrib)
 
         # Update graph counters and cleanup
         graph.next_vertex_id = max_vx_id + 1
