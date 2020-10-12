@@ -41,10 +41,9 @@ export class CanvasController {
 
     private resize = () => {
         const canvas = this.gl.canvas as HTMLCanvasElement;
-        var width = canvas.clientWidth;
-        var height = canvas.clientHeight;
-        if (canvas.width !== width ||
-            canvas.height !== height) {
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        if (canvas.width !== width || canvas.height !== height) {
             canvas.width = width;
             canvas.height = height;
             this.gl.viewport(0, 0, width, height);

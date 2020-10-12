@@ -1,4 +1,6 @@
+import { GraphRenderer } from "./renderer/GraphRenderer";
 import { BufferBuilder } from "./renderer/utilities/BufferBuilder";
+import { Network } from "./renderer/utilities/Network";
 
 export class TestGraphs {
 

@@ -62,7 +62,11 @@ export class GlyphProgram extends ViewProjectionProgram {
             vec2 corner_offset = CORNER_OFFSETS[corner];
           
             position.x += (glyph_font_position.z * corner_offset.x + glyph_position.z) * scale / glyph_row_height;
-            position.y -= node_radius + (glyph_row_height * corner_offset.y + glyph_position.w) * scale / glyph_row_height;
+            if (glyph_position.w < 0.0) {
+              position.y -= -node_radius + (corner_offset.y + glyph_position.w) * scale;
+            } else {
+              position.y -= node_radius + (corner_offset.y + glyph_position.w) * scale;
+            }
             position.z += 0.1;
             
             glyph_page = glyph_row / glyph_rows_per_page;

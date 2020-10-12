@@ -30,9 +30,13 @@ export class NodeHoverSelector {
     }
 
     mouseMoveHandler = (event: MouseEvent): void => {
+        this.update(event.clientX, event.clientY);
+    }
+
+    update = (x: number, y: number): void => {
         const newHoverNodeId = this.closest
-            ? Selector.selectClosestNode(event.clientX, event.clientY, this.camera, this.nodePositions, this.nodePositions.length / 4)
-            : Selector.selectNode(event.clientX, event.clientY, this.camera, this.nodePositions, this.nodePositions.length / 4);
+            ? Selector.selectClosestNode(x, y, this.camera, this.nodePositions, this.nodePositions.length / 4)
+            : Selector.selectNode(x, y, this.camera, this.nodePositions, this.nodePositions.length / 4);
 
         if (newHoverNodeId !== this.hoverNodeId) {
 

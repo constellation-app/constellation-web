@@ -23,20 +23,23 @@ export class PanGesture {
         nodeHoverSelector.canvas.addEventListener('mousedown', this.handleMouseDown);
         nodeHoverSelector.canvas.addEventListener('mousemove', this.handleMouseMove);
         nodeHoverSelector.canvas.addEventListener('mouseup', this.handleMouseUp);
+        nodeHoverSelector.canvas.addEventListener('mouseout', this.handleMouseUp);
     }
 
     handleMouseDown = (event: MouseEvent): void => {
-        this.hoverNodeId = this.nodeHoverSelector.getHoverNode();
-        if (this.hoverNodeId !== null) {
-            Matrix.world2LocalPoint(this.nodeHoverSelector.nodePositions, this.hoverNodeId * 4, this.nodeHoverSelector.camera.viewMatrix, this.hoverNodePosition);
+        if (!event.shiftKey) {
+            this.hoverNodeId = this.nodeHoverSelector.getHoverNode();
+            if (this.hoverNodeId !== null) {
+                Matrix.world2LocalPoint(this.nodeHoverSelector.nodePositions, this.hoverNodeId * 4, this.nodeHoverSelector.camera.viewMatrix, this.hoverNodePosition);
 
-            this.nodeHoverSelector.camera.updatePixelVector(event.clientX, event.clientY, this.localPixelVector);
-            Matrix.local2WorldVector(this.localPixelVector, 0, this.nodeHoverSelector.camera.viewMatrix, this.worldPixelVector);
-            Matrix.scale(this.worldPixelVector, -this.hoverNodePosition[2], this.worldPixelVector);
-            Matrix.add(this.worldPixelVector, this.nodeHoverSelector.camera.eye, this.dragStartPosition);
+                this.nodeHoverSelector.camera.updatePixelVector(event.clientX, event.clientY, this.localPixelVector);
+                Matrix.local2WorldVector(this.localPixelVector, 0, this.nodeHoverSelector.camera.viewMatrix, this.worldPixelVector);
+                Matrix.scale(this.worldPixelVector, -this.hoverNodePosition[2], this.worldPixelVector);
+                Matrix.add(this.worldPixelVector, this.nodeHoverSelector.camera.eye, this.dragStartPosition);
 
-            Matrix.copyVector(this.nodeHoverSelector.camera.target, this.savedTargetVector);
-            Matrix.subtract(this.savedTargetVector, this.nodeHoverSelector.camera.eye, this.savedTargetVector);
+                Matrix.copyVector(this.nodeHoverSelector.camera.target, this.savedTargetVector);
+                Matrix.subtract(this.savedTargetVector, this.nodeHoverSelector.camera.eye, this.savedTargetVector);
+            }
         }
     }
 
