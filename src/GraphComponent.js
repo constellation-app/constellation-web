@@ -18,6 +18,7 @@ import { PanGesture } from './renderer/listeners/PanGesture';
 import { NodeClickSelector } from './renderer/listeners/NodeClickSelector';
 import { Rotator } from './renderer/listeners/Rotator';
 import { ConstellationGraphLoader } from './ConstellationGraphLoader';
+import { ElementList } from './ElementList';
 
 class GraphComponent extends Component {
 
@@ -25,68 +26,109 @@ class GraphComponent extends Component {
     
     componentDidMount = () => {     
 
+      const e = new ElementList(2);
+      const id = e.add();
+      console.log(id);
+      console.log(e.getCount());
+      
       var controller = new CanvasController(this.canvasRef.current);
       var gl = controller.gl;
   
-      const nodeCount = 1000; const graphRadius = 400; const linkLength = 100;
-      // const nodeCount = 50000; const graphRadius = 400; const linkLength = 20;
+      // const nodeCount = 1000; const graphRadius = 400; const linkLength = 100;
+      // // const nodeCount = 50000; const graphRadius = 400; const linkLength = 20;
         
-      var { nodePositions, nodeVisuals, linkPositions } = TestGraphs.closestNeighbours(nodeCount, graphRadius, linkLength);
+      // var { nodePositions, nodeVisuals, linkPositions } = TestGraphs.closestNeighbours(nodeCount, graphRadius, linkLength);
       // var { nodePositions, nodeVisuals, linkPositions } = TestGraphs.center();
       
-      // ConstellationGraphLoader.load("test_graph.json", (np, nv, labels) => {
+      ConstellationGraphLoader.load("test_graph.json", (np, nv, labels, lp) => {
+        const graphRenderer = new GraphRenderer(gl);
 
-      // });
+        const camera = new Camera(graphRenderer);
+        camera.setProjection(1024, 1024, Math.PI * 0.5, 1, 10000);
+        camera.lookAt(new Float32Array([400, 0, 300]), new Float32Array([0, 0, 0]), new Float32Array([0, 1, 0]));
 
-      const graphRenderer = new GraphRenderer(gl);
+        graphRenderer.setNodes(np, nv);
+        graphRenderer.setLinks(lp);
 
-      const camera = new Camera(graphRenderer);
-      camera.setProjection(1024, 1024, Math.PI * 0.5, 1, 10000);
-      camera.lookAt(new Float32Array([400, 0, 300]), new Float32Array([0, 0, 0]), new Float32Array([0, 1, 0]));
+        var glyphRenderer = new GlyphRenderer(36, 'NotoSansSC-Black.otf', 2, (error) => {
+          graphRenderer.setGlyphRenderer(glyphRenderer);
+  
+          const glyphs = [];
+          for (var i = 0; i < np.length / 4; i++) {
+            if (labels[i]) {
+              glyphRenderer.renderText(i, 0, labels[i], glyphs);
+            }
+          }
+          graphRenderer.setGlyphScale(3);
+          graphRenderer.setGlyphs(new Float32Array(glyphs));
+          graphRenderer.setGlyphColor(new Float32Array([1, 1, 0]));
+        });
 
-      graphRenderer.setNodes(nodePositions, nodeVisuals);
-      graphRenderer.setLinks(linkPositions);
+        controller.render = (gl, time) => {
+          graphRenderer.render();
+        };
+  
+        controller.updateSize = (width, height) => {
+          camera.setSize(width, height);
+        };
+  
+        controller.start();
 
-      var glyphRenderer = new GlyphRenderer(36, 'NotoSansSC-Black.otf', 2, (error) => {
-        graphRenderer.setGlyphRenderer(glyphRenderer);
-
-        const glyphs = [];
-        const labels = ["这是什么", "abcdefghijklmnopqrstuvwxyz", "يونيكود.", "Node"];
-        for (var i = 0; i < nodeCount; i++) {
-          const label1 = Math.floor(Math.random() * labels.length);
-          glyphRenderer.renderText(i, 0, labels[label1] + "-" + i, glyphs);
-          const label2 = Math.floor(Math.random() * labels.length);
-          glyphRenderer.renderText(i, -1, labels[label2] + "-" + i, glyphs);
-        }
-        graphRenderer.setGlyphScale(3);
-        graphRenderer.setGlyphs(new Float32Array(glyphs));
-        graphRenderer.setGlyphColor(new Float32Array([1, 1, 0]));
+        const nodeHoverSelector = new NodeHoverSelector(this.canvasRef.current, camera, graphRenderer, np, nv, true);
+        new ZoomGesture(nodeHoverSelector);
+        new PanGesture(nodeHoverSelector);
+        new Rotator(this.canvasRef.current, camera);
       });
 
-      const rotateAction = new RotateAction(this.camera);
-      const frameRateAction = new FrameRateAction();
+      // const graphRenderer = new GraphRenderer(gl);
 
-      controller.render = (gl, time) => {
-        // rotateAction.execute(time);
-        // frameRateAction.execute(time);
-        graphRenderer.render();
-      };
+      // const camera = new Camera(graphRenderer);
+      // camera.setProjection(1024, 1024, Math.PI * 0.5, 1, 10000);
+      // camera.lookAt(new Float32Array([400, 0, 300]), new Float32Array([0, 0, 0]), new Float32Array([0, 1, 0]));
 
-      controller.updateSize = (width, height) => {
-        camera.setSize(width, height);
-      };
+      // graphRenderer.setNodes(nodePositions, nodeVisuals);
+      // graphRenderer.setLinks(linkPositions);
 
-      controller.start();
+      // var glyphRenderer = new GlyphRenderer(36, 'NotoSansSC-Black.otf', 2, (error) => {
+      //   graphRenderer.setGlyphRenderer(glyphRenderer);
 
-      // new Trackball(this.canvasRef.current, camera);
+      //   const glyphs = [];
+      //   const labels = ["这是什么", "abcdefghijklmnopqrstuvwxyz", "يونيكود.", "Node"];
+      //   for (var i = 0; i < nodeCount; i++) {
+      //     const label1 = Math.floor(Math.random() * labels.length);
+      //     glyphRenderer.renderText(i, 0, labels[label1] + "-" + i, glyphs);
+      //     const label2 = Math.floor(Math.random() * labels.length);
+      //     glyphRenderer.renderText(i, -1, labels[label2] + "-" + i, glyphs);
+      //   }
+      //   graphRenderer.setGlyphScale(3);
+      //   graphRenderer.setGlyphs(new Float32Array(glyphs));
+      //   graphRenderer.setGlyphColor(new Float32Array([1, 1, 0]));
+      // });
+
+      // const rotateAction = new RotateAction(this.camera);
+      // const frameRateAction = new FrameRateAction();
+
+      // controller.render = (gl, time) => {
+      //   // rotateAction.execute(time);
+      //   // frameRateAction.execute(time);
+      //   graphRenderer.render();
+      // };
+
+      // controller.updateSize = (width, height) => {
+      //   camera.setSize(width, height);
+      // };
+
+      // controller.start();
+
+      // // new Trackball(this.canvasRef.current, camera);
       
-      const nodeHoverSelector = new NodeHoverSelector(this.canvasRef.current, camera, graphRenderer, nodePositions, nodeVisuals, true);
-      new ZoomGesture(nodeHoverSelector);
-      new PanGesture(nodeHoverSelector);
+      // const nodeHoverSelector = new NodeHoverSelector(this.canvasRef.current, camera, graphRenderer, nodePositions, nodeVisuals, true);
+      // new ZoomGesture(nodeHoverSelector);
+      // new PanGesture(nodeHoverSelector);
 
-      // new NodeClickSelector(this.canvasRef.current, camera, graphRenderer, nodePositions, nodeVisuals, false);
+      // // new NodeClickSelector(this.canvasRef.current, camera, graphRenderer, nodePositions, nodeVisuals, false);
 
-      new Rotator(this.canvasRef.current, camera);
+      // new Rotator(this.canvasRef.current, camera);
     }
 
     render() {

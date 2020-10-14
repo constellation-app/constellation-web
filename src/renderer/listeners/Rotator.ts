@@ -1,6 +1,5 @@
 import { Camera } from "../Camera";
 import { Matrix } from "../utilities/Matrix";
-import { Selector } from "../utilities/Selector";
 
 export class Rotator {
     readonly canvas: HTMLCanvasElement;
