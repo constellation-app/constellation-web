@@ -591,11 +591,13 @@ class VertexSerializer(serializers.ModelSerializer):
     objects required, as determined by the GraphVtxAttrib objects allocated to the parent Graph.
     """
 
+    json = serializers.SerializerMethodField()
+
     # Because a uniqueness constraint across graph_fk and vx_id fields, and vx_id is a field which we calculate based on
     # parent Graph field (next_vertex_id), we need to update the value prior to reaching the serializer.
     class Meta:
         model = Vertex
-        fields = ['id', 'graph_fk', 'vx_id', 'attribute_json']  # The vx_id field is included, but its value is always overridden
+        fields = ['id', 'graph_fk', 'vx_id', 'json']  # The vx_id field is included, but its value is always overridden
         validators = [
             UniqueTogetherValidator(
                 queryset=Vertex.objects.all(),
@@ -603,6 +605,12 @@ class VertexSerializer(serializers.ModelSerializer):
             )
         ]
 
+    def get_json(self, obj):
+        """
+        Return JSON version of vertex data including all linked attributes.
+        """
+        return json.loads(obj.attribute_json)
+    
     def to_internal_value(self, data):
         """
         Perform processing to determine the next free vx_id value by obtaining the next_vertex_id stored in the parent
@@ -757,19 +765,27 @@ class TransactionSerializer(serializers.ModelSerializer):
     GraphTransactionAttrib objects allocated to the parent Graph.
     """
 
+    json = serializers.SerializerMethodField()
+
     # Because a uniqueness constraint across graph_fk and tx_id fields, and
     # tx_id is a field which we calculate based on parent Graph field
     # (next_transaction_id), we need to update the value prior to reaching the
     # serializer.
     class Meta:
         model = Transaction
-        fields = ['id', 'graph_fk', 'vx_src', 'vx_dst', 'tx_id', 'attribute_json']  # The tx_id field is included, but its value is always overridden
+        fields = ['id', 'graph_fk', 'vx_src', 'vx_dst', 'tx_id', 'json']  # The tx_id field is included, but its value is always overridden
         validators = [
             UniqueTogetherValidator(
                 queryset=Transaction.objects.all(),
                 fields=['graph_fk', 'tx_id']
             )
         ]
+
+    def get_json(self, obj):
+        """
+        Return JSON version of vertex data including all linked attributes.
+        """
+        return json.loads(obj.attribute_json)
 
     def to_internal_value(self, data):
         """
