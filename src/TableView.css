@@ -1,0 +1,9 @@
+.tableRoot.MuiTable-root {
+    width: 100%;
+    background-color: white;
+}
+
+.cell.MuiTableCell-head {
+    color: white;
+    background-color: #444444;
+}

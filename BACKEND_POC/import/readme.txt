@@ -1,0 +1,1 @@
+This directory is the location the backend application will look for star files to import.
