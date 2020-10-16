@@ -46,6 +46,19 @@ export class ConstellationGraphLoader {
 
                 callback(new Float32Array(nodePositions), new Uint32Array(nodeVisuals), labels, new Uint32Array(linkPositions));
             }
+            // Added to handle the case when an invalid ID of the graph was requested.
+            else if(status === 404) {
+                // TODO: Code to clear the buffers when no graph is available. 
+                console.log("TODO: status = 404");
+                const nodePositions: number[] = [];
+                const nodeVisuals: number[] = [];
+                const labels: string[] = [];
+                const linkPositions: number[] = [];
+                BufferBuilder.appendNodePosition(0, 0, 0, 0, nodePositions);
+                BufferBuilder.appendNodeVisuals(0, 0, 0, false, nodeVisuals);
+                BufferBuilder.appendLinkPosition(0, 0, 0, 0, 0, false, linkPositions);
+                callback(new Float32Array(nodePositions), new Uint32Array(nodeVisuals), labels, new Uint32Array(linkPositions));
+            }
         });
     }
 
