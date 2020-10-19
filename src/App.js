@@ -34,7 +34,6 @@ function App() {
         {tableViewSideToggled &&
           <Grid container direction="column" style={{height: window.innerHeight, width: '25%'}}>
             <Grid item style={{height: '100%', width: '100%'}}>
-              {/*Pushes at around 5000 elements from testing */}
               <TableView />
             </Grid>
           </Grid>
@@ -48,8 +47,7 @@ function App() {
           </Grid>
           {tableViewToggled &&
             <Grid item style={{height: '35%'}}>
-              {/*Pushes at around 5000 elements from testing */}
-              <TableView style={{height: '100%'}} />
+              <TableView />
             </Grid>
           }
         </Grid>
