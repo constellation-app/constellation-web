@@ -1,0 +1,22 @@
+[
+{"model": "app.attribtype", "pk": 1, "fields": {"label": "boolean", "raw_type": 0}},
+{"model": "app.attribtype", "pk": 2, "fields": {"label": "float", "raw_type": 1}},
+{"model": "app.attribtype", "pk": 3, "fields": {"label": "integer", "raw_type": 2}},
+{"model": "app.attribtype", "pk": 4, "fields": {"label": "camera", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 5, "fields": {"label": "vertex_attribute_name", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 6, "fields": {"label": "graph_labels_nodes", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 7, "fields": {"label": "draw_flags", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 8, "fields": {"label": "color", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 9, "fields": {"label": "string", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 10, "fields": {"label": "datetime", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 11, "fields": {"label": "transaction_type", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 12, "fields": {"label": "line_style", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 13, "fields": {"label": "icon", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 14, "fields": {"label": "raw", "raw_type": 4}},
+{"model": "app.attribtype", "pk": 15, "fields": {"label": "transaction_attribute_name", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 16, "fields": {"label": "graph_labels_transactions", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 17, "fields": {"label": "decorators", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 18, "fields": {"label": "connection_mode", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 19, "fields": {"label": "vertex_type", "raw_type": 3}},
+{"model": "app.attribtype", "pk": 20, "fields": {"label": "blaze", "raw_type": 3}}
+]
