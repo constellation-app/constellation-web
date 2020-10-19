@@ -1,10 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
+import Grid from '@material-ui/core/Grid';
 
+import MenuButton from './MenuButton';
 import GraphComponent from './GraphComponent';
+import TableView from './TableView';
 
 import './App.css';
 
 function App() {
+  
+  const [tableViewToggled, setTableViewToggled] = useState(false);
+  const [tableViewSideToggled, setTableViewSideToggled] = useState(false);
+
+  function toggleTableView() {
+    setTableViewToggled(!tableViewToggled);
+  }
+
+  function toggleTableViewSide() {
+    setTableViewSideToggled(!tableViewSideToggled);
+  }
+
   return (
     <div className="App">
       <Grid container>
