@@ -14,9 +14,6 @@ in a Python environment via a Docker image.
 <a href="https://mariadb.org/">
 <img src="https://mariadb.org/wp-content/themes/twentynineteen-child/icons/mariadb_org_rgb_h.svg" alt="Docker" width="226" height="100">
 </a>
-<a href="https://www.rabbitmq.com/">
-<img src="https://www.rabbitmq.com/img/logo-rabbitmq.svg" alt="RabbitMQ" width="226" height="100">
-</a>
 <a href="https://www.python.org/downloads/release/python-382/">
 <img src="https://www.python.org/static/img/python-logo.png" alt="Pycharm" width="300" height="80">
 </a>
@@ -72,28 +69,7 @@ To view database content:
 5. Enter "use database docker-db";
 Use normal SQL commands to interrogate the database.
 
-## Update Subscription
-
-### Non-Web Client Subscription
-A RabbitMQ message broker is hooked into the Django application using the Celery package. This
-implementation allows two key functionalities:
-1. long running tasks to be configured to run asynchronously. An example task **import_starfile_task**
-is found in **worker/tasks.py**. When triggered (via a call in the star file import code) a request to
-execute is placed on a queue and processed by one of the available Celery worker processes. Users can
-view the celery queues by going to **http://127.0.0.1:5555/**. Further information can be found at the
-link https://pypi.org/project/django-celery/.
-2. A RabbitMQ **Exchange** called **CONSTELLATION.DataUpdates** is constructed that external applications
-can subscribe to using standard RabbitMQ/message broker functionality. 
-3. A demo message consumer has been constructed called **sample_client.py** which can be run with the
-command **python sample_client.py** - run in a virtual environment using the supplied **requirements.txt**
-configuration. This demo just sits in a loop and pulls messages off of the **CONSTELLATION.DataUpdates**
-exchange, which it connects to with its own message queue. This functionality somewhat mirrors how external
-applications may wish to interact with the message queue. The content supplied in the queue is essentially
-ID information identifying records that are created/modified/deleted, which would alert subscribers to
-changes within the web-constellation application and allow them to pull the changes using standard REST
-endpoints.
-
-### Web Client Subscriptions 
+## Web Client Subscriptions 
 Similar to above a web socket endpoint has also been developed utilizing the django_channels package tied
 to a redis queue. The endpoint is found at ./ws/updates URL, ie for localhost, the URL: 
 ws://127.0.0.1:8000/ws/updates/ is used. Updates for all data types are posted to this web socket, rather
