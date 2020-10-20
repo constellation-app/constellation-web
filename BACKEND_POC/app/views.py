@@ -21,7 +21,7 @@ import json
 import zipfile
 from os import path
 from django.db.models import signals
-from rest_framework import permissions, generics
+from rest_framework import permissions, generics, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from app.models import AttribType, AttribTypeChoice, attrib_str_to_value
@@ -96,7 +96,7 @@ def __update_vertex_attribute(vertex_attribute, value):
     if not isinstance(vertex_attribute, VertexAttrib):
         raise InvalidTypeException("Supplied object is not VertexAttrib")
 
-    attrib_type = vertex_attribute.attrib_fk.type_fk.type
+    attrib_type = vertex_attribute.attrib_fk.type_fk.raw_type
     if attrib_type == AttribTypeChoice.DICT:
         vertex_attribute.value_str = json.dumps(value)
     else:
@@ -121,7 +121,7 @@ def __update_transaction_attribute(transaction_attribute, value):
     if not isinstance(transaction_attribute, TransactionAttrib):
         raise InvalidTypeException("Supplied object is not TransactionAttrib")
 
-    attrib_type = transaction_attribute.attrib_fk.type_fk.type
+    attrib_type = transaction_attribute.attrib_fk.type_fk.raw_type
     if attrib_type == AttribTypeChoice.DICT:
         transaction_attribute.value_str = json.dumps(value)
     else:
@@ -514,6 +514,7 @@ class VertexAttributeView(generics.RetrieveUpdateDestroyAPIView):
 
         # Delete the record
         instance.delete()
+
 # </editor-fold>
 
 
@@ -583,165 +584,270 @@ class TransactionAttributeView(generics.RetrieveUpdateDestroyAPIView):
 
 
 # <editor-fold Graph/Vertex/Transaction Attribute Edit Views - using graph_id, vx_id/tx_id to identify">
-# Editing of attributes performed in ths block uses the vx_id and tx_id fields
-# from the vertex and transaction records along with the container graphs ID to
-# uniquely identify the attribute to be changed. These vx_id and tx_id differ
-# from the default IDs for the records as they are only unique 'per container
-# graph'.
-@api_view(['POST'])
-def EditGraphAttribute(request):
+def GetValueString(raw_type, value):
     """
-    Allow a graph attribute to be added, or edited based on its containing
-    graph.
-    Body of POST should be of the form:
-        {"graph_id": 3, "label": "x", "value": 1.0}
-    Where graph_id identifies the parent graph, label is the name of the
-    attribute being modified and value is the value to change it to.
+    Given a supplied attribute type (of type AttribTypeChoice) determine return the corresponding string representation
+    of the supplied value.
+    """
+    if raw_type == AttribTypeChoice.DICT:
+        return json.dumps(value)
+    return str(value)
+
+
+
+
+@api_view(['POST'])
+def EditGraphAttributes(request):
+    """
+    Update one or more attributes for the graph with supplied ID. A series of key/value pairs are then included in the
+    payload identifying attributes to update and their assigned new values.
+    Example usage 1: (sets the decorators,3d_display values of the graph with id=1)
+      {"id": 1, "decorators": "00", "3d_display": true}
     """
     if request.method == 'POST':
 
-        # Ensure post has graph_id, label, value
-        missing_keys = False
-        missing_keys_error = "Missing keys: "
-        for key in ['graph_id', 'label', 'value']:
-            if key not in request.data:
-                missing_keys_error = missing_keys_error + key + " "
-                missing_keys = True
 
-        if missing_keys:
-            return Response({"Error": missing_keys_error, "data": request.data})
-
-        try:
-            graph_fk = request.data['graph_id']
-            label = request.data['label']
-            value = request.data['value']
-
-            # Get parent Graph
-            graph = Graph.objects.filter(graph_fk_id=graph_fk).last()
+        # Attempt to find the identified graph. Ensure a graph was found and store it for later use. If no graph was
+        # found return error. While processing, extract a list of attributes that have been  supplied as these are the
+        # names of attributes to update.
+        graph = None
+        attribute_labels = list(request.data.keys())
+        if 'id' in request.data:
+            graph = Graph.objects.filter(id=request.data['id']).last()
+            attribute_labels.remove('id')
             if graph is None:
-                return Response({"Info": "Could not find graph with supplied graph_fk" +
-                                         " value", "data": request.data})
-            print("## DEBUG Graph=" + str(graph))
-            attribute = GraphAttrib.objects.filter(graph_fk=graph, attrib_fk__label=label).last()
-            if attribute is None:
-                # See if a graph attribute is defined for the graph with this label
-                graph_attribute = graph.graphgraphattrib_set.all().filter(label=label).last()
-                if graph_attribute is None:
-                    return Response({"Info": "Could not find attribute with supplied label for " +
-                                             "selected graph", "data": request.data})
-                else:
-                    attribute = VertexAttrib(graph_fk=graph, attrib_fk=graph_attribute)
+                return Response({"detail": "Could not find graph with supplied 'id'."},
+                                status=status.HTTP_404_NOT_FOUND)
 
-            # Set value
-            __update_vertex_attribute(attribute, value)
-        except Exception as e:
-            return Response({"Error": "An exception occured processing request", "data": request.data})
+        if graph is None:
+            return Response({"detail": "No graph identified - need to supply 'id'."}, status=status.HTTP_404_NOT_FOUND)
 
-        return Response({"Info": "Found all keys", "data": request.data})
+        # At this point a graph has been found matching the identifiers, process its attributes.
+
+        # Extract the rolled up attribute_json from the graph and a collection of attributes corresponding to the
+        # requested labels - this list will be validated and processed.
+        attribute_json = json.loads(str(graph.attribute_json))
+        attributes = GraphAttrib.objects.filter(graph_fk=graph.id, attrib_fk__label__in=attribute_labels)
+
+        # Create attributes is they are valid (ie an entry with matching label exists in attribute definitions for the
+        # given graph) but don't exist.
+        existing_attributes = list(attributes.values_list('attrib_fk__label', flat=True))
+        new_attributes = [elem for elem in attribute_labels if elem not in existing_attributes]
+        if len(new_attributes) > 0:
+            # At least one supplied attribute label doesn't have an attribute created for it. Check if the labels
+            # correspond to valid attributes and create if needed.
+            attrib_definitions = GraphAttribDefGraph.objects.filter(graph_fk=graph.id, label__in=new_attributes)
+
+            # Ensure every requested attribute label matches an allocated attribute definition, if this is the case then
+            # the two list lengths will match - if not there is a mismatch, raise the error.
+            if len(attrib_definitions) != len(new_attributes):
+                return Response({"detail": "One or more requested attribute(s) do not exist for graph."},
+                                status=status.HTTP_404_NOT_FOUND)
+
+            # Create the new attribute.
+            for new_attribute_label in new_attributes:
+                value = request.data[new_attribute_label]
+                definition = GraphAttribDefGraph.objects.filter(graph_fk=graph.id, label=new_attribute_label).last()
+                new_attribute = GraphAttrib(graph_fk=graph, attrib_fk=definition,
+                                            value_str=GetValueString(definition.type_fk.raw_type, value))
+                new_attribute.save()
+
+        # Update values of existing attributes in line with supplied request in the attribute list, ensure the
+        # associated graph attribute_json field is kept in synch.
+        i = 0
+        while i < len(attributes):
+            label = attributes[i].attrib_fk.label
+            attributes[i].value_str = GetValueString(attributes[i].attrib_fk.type_fk.raw_type, request.data[label])
+            attribute_json[label] = request.data[label]
+            i += 1
+
+        # Update transactions and save transaction to trigger updates to subscribers.
+        GraphAttrib.objects.bulk_update(attributes, ['value_str'])
+        graph.attribute_json = json.dumps(attribute_json)
+        graph.save()
+        return Response({"Info": "Graph update was successful", "data": request.data})
+
+    else:
+        # Only post operations are supported
+        return Response({"detail": "Invalid operation requested"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
-def EditVertexAttribute(request):
+def EditVertexAttributes(request):
     """
-    Allow a vertex attribute to be added, or edited based on its containing
-    graph and vertex.
-    Body of POST should be of the form:
-        {"graph_id": 3, "vx_id": 0, "label": "x", "value": 1.0}
-    Where graph_id and vx_id identify the parent graph/vertex, label is the name
-    of the attribute being modified and value is the value to change it to.
+    Update one or more attributes for the identified vertex. Vertexes are identified either by id, or by a combination
+    of graph_id and vx_id. A series of key/value pairs are then included in the payload identifying attributes to update
+    and their assigned new values.
+    Example usage 1: (sets the x,y,z values of the vertex with id=5)
+      {"id": 5, "x": 34.2, "y": 10.0, "z": 0.03}
+    Example usage 2: (sets the x,y,z values of the vertex with vx_id=4 belonging to the graph with id=1)
+      {"graph_id": 1, "vx_id": 4, "x": 34.2, "y": 10.0, "z": 0.03}
     """
     if request.method == 'POST':
 
-        # Ensure post has graph_id, vx_id, label, value
-        missing_keys = False
-        missing_keys_error = "Missing keys: "
-        for key in ['graph_id', 'vx_id', 'label', 'value']:
-            if key not in request.data:
-                missing_keys_error = missing_keys_error + key + " "
-                missing_keys = True
-
-        if missing_keys:
-            return Response({"Error": missing_keys_error, "data": request.data})
-
-        try:
-            graph_fk = request.data['graph_id']
-            vx_id = request.data['vx_id']
-            label = request.data['label']
-            value = request.data['value']
-
-            # Get parent Vertex
-            vertex = Vertex.objects.filter(graph_fk_id=graph_fk, vx_id=vx_id).last()
+        # Attempt to find the identified vertex using one of two methods. Ensure a vertex was found and store it for
+        # later use. If no vertex was found return error. While processing, extract a list of attributes that have been
+        # supplied as these are the names of attributes to update.
+        vertex = None
+        attribute_labels = list(request.data.keys())
+        if 'id' in request.data:
+            vertex = Vertex.objects.filter(id=request.data['id']).last()
+            attribute_labels.remove('id')
             if vertex is None:
-                return Response({"Info": "Could not find vertex with supplied graph_fk" +
-                                         " and vx_id values", "data": request.data})
-            print("## DEBUG Vertex=" + str(vertex))
-            attribute = VertexAttrib.objects.filter(vertex_fk=vertex, attrib_fk__label=label).last()
-            if attribute is None:
-                # See if a vertex attribute is defined for the graph with this label
-                graph = vertex.graph_fk
-                vertex_attribute = graph.graphvertexattrib_set.all().filter(label=label).last()
-                if vertex_attribute is None:
-                    return Response({"Info": "Could not find attribute with supplied label for " +
-                                             "selected vertex", "data": request.data})
-                else:
-                    attribute = VertexAttrib(vertex_fk=vertex, attrib_fk=vertex_attribute)
+                return Response({"detail": "Could not find vertex with supplied 'id'."},
+                                status=status.HTTP_404_NOT_FOUND)
 
-            # Set value
-            __update_vertex_attribute(attribute, value)
-        except Exception as e:
-            return Response({"Error": "An exception occured processing request", "data": request.data})
+        if 'graph_id' in request.data and 'vx_id' in request.data:
+            vertex = Vertex.objects.filter(graph_fk__id=request.data['graph_id'], vx_id=request.data['tx_id']).last()
+            attribute_labels.remove('graph_id')
+            attribute_labels.remove('vx_id')
+            return Response({"detail": "Could not find vertex with supplied 'graph_id'/'tx_id' combo."},
+                            status=status.HTTP_404_NOT_FOUND)
 
-        return Response({"Info": "Found all keys", "data": request.data})
+        if vertex is None:
+            return Response({"detail": "No vertex identified - need to supply 'id' or 'graph_id'/'vx_id' combo."},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        # At this point a vertex has been found matching the identifiers, process its attributes.
+
+        # Extract the rolled up attribute_json from the vertex and a collection of attributes corresponding to the
+        # requested labels - this list will be validated and processed.
+        attribute_json = json.loads(str(vertex.attribute_json))
+        attributes = VertexAttrib.objects.filter(vertex_fk=vertex.id, attrib_fk__label__in=attribute_labels)
+
+        # Create attributes is they are valid (ie an entry with matching label exists in attribute definitions for the
+        # given graph) but don't exist.
+        existing_attributes = list(attributes.values_list('attrib_fk__label', flat=True))
+        new_attributes = [elem for elem in attribute_labels if elem not in existing_attributes]
+        if len(new_attributes) > 0:
+            # At least one supplied attribute label doesn't have an attribute created for it. Check if the labels
+            # correspond to valid attributes and create if needed.
+            attrib_definitions = GraphAttribDefVertex.objects.filter(graph_fk=vertex.graph_fk,
+                                                                     label__in=new_attributes)
+
+            # Ensure every requested attribute label matches an allocated attribute definition, if this is the case then
+            # the two list lengths will match - if not there is a mismatch, raise the error.
+            if len(attrib_definitions) != len(new_attributes):
+                return Response({"detail": "One or more requested attribute(s) do not exist for graph."},
+                                status=status.HTTP_404_NOT_FOUND)
+
+            # Create the new attribute.
+            for new_attribute_label in new_attributes:
+                value = request.data[new_attribute_label]
+                definition = GraphAttribDefVertex.objects.filter(graph_fk=vertex.graph_fk,
+                                                                label=new_attribute_label).last()
+                new_attribute = VertexAttrib(vertex_fk=vertex, attrib_fk=definition,
+                                             value_str=GetValueString(definition.type_fk.raw_type, value))
+                new_attribute.save()
+
+        # Update values of existing attributes in line with supplied request in the attribute list, ensure the
+        # associated vertex attribute_json field is kept in synch.
+        i = 0
+        while i < len(attributes):
+            label = attributes[i].attrib_fk.label
+            attributes[i].value_str = GetValueString(attributes[i].attrib_fk.type_fk.raw_type, request.data[label])
+            attribute_json[label] = request.data[label]
+            i += 1
+
+        # Update transactions and save transaction to trigger updates to subscribers.
+        VertexAttrib.objects.bulk_update(attributes, ['value_str'])
+        vertex.attribute_json = json.dumps(attribute_json)
+        vertex.save()
+        return Response({"Info": "Vertex update was successful", "data": request.data})
+
+    else:
+        # Only post operations are supported
+        return Response({"detail": "Invalid operation requested"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
-def EditTransactionAttribute(request):
+def EditTransactionAttributes(request):
     """
-    Allow a transaction attribute to be added, or edited based on its containing
-    graph and transaction.
-    Body of POST should be of the form:
-        {"graph_id": 3, "tx_id": 0, "label": "x", "value": 1.0}
-    Where graph_id and tx_id identify the parent graph/transaction, label is the
-    name of the attribute being modified and value is the value to change it to.
+    Update one or more attributes for the identified transaction. Transactions are identified either by id, or by a
+    combination of graph_id and tx_id. A series of key/value pairs are then included in the payload identifying
+    attributes to update and their assigned new values.
+    Example usage 1: (sets the Label value of the transaction with id=5)
+      {"id": 5, "Identifier": "mylabel"}
+    Example usage 2: (sets the Label value of the transaction with tx_id=4 belonging to the graph with id=1)
+      {"graph_id": 1, "tx_id": 4, "Identifier": "mylabel"}
     """
     if request.method == 'POST':
 
-        # Ensure post has graph_id, tx_id, label, value
-        missing_keys = False
-        missing_keys_error = "Missing keys: "
-        for key in ['graph_id', 'tx_id', 'label', 'value']:
-            if key not in request.data:
-                missing_keys_error = missing_keys_error + key + " "
-                missing_keys = True
-
-        if missing_keys:
-            return Response({"Error": missing_keys_error, "data": request.data})
-
-        try:
-            graph_fk = request.data['graph_id']
-            tx_id = request.data['tx_id']
-            label = request.data['label']
-            value = request.data['value']
-
-            # Get parent Transaction
-            transaction = Transaction.objects.filter(graph_fk_id=graph_fk, tx_id=tx_id).last()
+        # Attempt to find the identified transaction using one of two methods. Ensure a transaction was found and store
+        # it for later use. If no transaction was found return error. While processing, extract a list of attributes
+        # that have been supplied as these are the names of attributes to update.
+        transaction = None
+        attribute_labels = list(request.data.keys())
+        if 'id' in request.data:
+            transaction = Transaction.objects.filter(id=request.data['id']).last()
+            attribute_labels.remove('id')
             if transaction is None:
-                # See if a transaction attribute is defined for the graph with this label
-                graph = transaction.graph_fk
-                transaction_attribute = graph.graphtransactionattrib_set.all().filter(label=label).last()
-                if transaction_attribute is None:
-                    return Response({"Info": "Could not find attribute with supplied label for " +
-                                             "selected transaction", "data": request.data})
-                else:
-                    attribute = VertexAttrib(transaction_fk=transaction, attrib_fk=transaction_attribute)
+                return Response({"detail": "Could not find transaction with supplied 'id'."},
+                                status=status.HTTP_404_NOT_FOUND)
 
-            # Set value
-            __update_transaction_attribute(attribute, value)
-        except Exception as e:
-            return Response({"Error": "An exception occured processing request", "data": request.data})
+        if 'graph_id' in request.data and 'tx_id' in request.data:
+            transaction = Transaction.objects.filter(graph_fk__id=request.data['graph_id'],
+                                                     tx_id=request.data['tx_id']).last()
+            attribute_labels.remove('graph_id')
+            attribute_labels.remove('tx_id')
+            return Response({"detail": "Could not find transaction with supplied 'graph_id'/'tx_id' combo."},
+                            status=status.HTTP_404_NOT_FOUND)
 
-        return Response({"Info": "Found all keys", "data": request.data})
+        if transaction is None:
+            return Response({"detail": "No transaction identified - need to supply 'id' or 'graph_id'/'tx_id' combo."},
+                            status=status.HTTP_404_NOT_FOUND)
 
+        # At this point a transaction has been found matching the identifiers, process its attributes.
+
+        # Extract the rolled up attribute_json from the transaction and a collection of attributes corresponding to the
+        # requested labels - this list will be validated and processed.
+        attribute_json = json.loads(str(transaction.attribute_json))
+        attributes = TransactionAttrib.objects.filter(transaction_fk=transaction.id,
+                                                      attrib_fk__label__in=attribute_labels)
+
+        # Create attributes is they are valid (ie an entry with matching label exists in attribute definitions for the
+        # given graph) but don't exist.
+        existing_attributes = list(attributes.values_list('attrib_fk__label', flat=True))
+        new_attributes = [elem for elem in attribute_labels if elem not in existing_attributes]
+        if len(new_attributes) > 0:
+            # At least one supplied attribute label doesn't have an attribute created for it. Check if the labels
+            # correspond to valid attributes and create if needed.
+            attrib_definitions = GraphAttribDefTrans.objects.filter(graph_fk=transaction.graph_fk,
+                                                                    label__in=new_attributes)
+
+            # Ensure every requested attribute label matches an allocated attribute definition, if this is the case then
+            # the two list lengths will match - if not there is a mismatch, raise the error.
+            if len(attrib_definitions) != len(new_attributes):
+                return Response({"detail": "One or more requested attribute(s) do not exist for graph."},
+                                status=status.HTTP_404_NOT_FOUND)
+
+            # Create the new attribute.
+            for new_attribute_label in new_attributes:
+                value = request.data[new_attribute_label]
+                definition = GraphAttribDefTrans.objects.filter(graph_fk=transaction.graph_fk,
+                                                                label=new_attribute_label).last()
+                new_attribute = TransactionAttrib(transaction_fk=transaction, attrib_fk=definition,
+                                                  value_str=GetValueString(definition.type_fk.raw_type, value))
+                new_attribute.save()
+
+        # Update values of existing attributes in line with supplied request in the attribute list, ensure the
+        # associated transaction attribute_json field is kept in synch.
+        i = 0
+        while i < len(attributes):
+            label = attributes[i].attrib_fk.label
+            attributes[i].value_str = GetValueString(attributes[i].attrib_fk.type_fk.raw_type, request.data[label])
+            attribute_json[label] = request.data[label]
+            i += 1
+
+        # Update transactions and save transaction to trigger updates to subscribers.
+        TransactionAttrib.objects.bulk_update(attributes, ['value_str'])
+        transaction.attribute_json = json.dumps(attribute_json)
+        transaction.save()
+        return Response({"Info": "Transaction update was successful", "data": request.data})
+
+    else:
+        # Only post operations are supported
+        return Response({"detail": "Invalid operation requested"}, status=status.HTTP_400_BAD_REQUEST)
 # </editor-fold>
 
 
@@ -890,9 +996,9 @@ def ImportLegacyJSON(request):
 
         count = 0
         django_attributes = []
+        graph_json = {}
         graph_data = graph_block['graph'][1]['data']
         for attr in graph_data[0]:
-            print(str(attr))
 
             # Find corresponding attribute definition
             graph_attrib = graph_attribute_defs[attr]
@@ -908,7 +1014,8 @@ def ImportLegacyJSON(request):
                                        value_str=value)
             django_attributes.append(graph_attrib)
             count = count + 1
-            print(str(attr) + " = " + str(graph_attrib))
+            graph_json[str(attr)] = graph_data[0][attr]
+
             if count >= IMPORT_BATCH_SIZE:
                 signals.post_save.disconnect(graph_saved, sender=Graph)
                 GraphAttrib.objects.bulk_create(django_attributes)
@@ -921,7 +1028,6 @@ def ImportLegacyJSON(request):
             signals.post_save.disconnect(graph_saved, sender=Graph)
             GraphAttrib.objects.bulk_create(django_attributes)
             signals.post_save.connect(graph_saved, sender=Graph)
-
 
         # Process vertex attribute definitions
         attrs = vertex_block['vertex'][0]['attrs']
@@ -1134,7 +1240,8 @@ def ImportLegacyJSON(request):
             signals.post_save.connect(transaction_saved, sender=Transaction)
             signals.post_save.connect(transaction_attribute_saved, sender=TransactionAttrib)
 
-        # Update graph counters and cleanup
+        # Update graph attribute_json and counters and cleanup
+        graph.attribute_json = graph_json
         graph.next_vertex_id = max_vx_id + 1
         graph.next_transaction_id = max_tx_id + 1
         graph.save()

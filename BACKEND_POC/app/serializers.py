@@ -55,12 +55,7 @@ def get_graph_json(obj):
         if attr_data['default'] is None:
             attr_data.pop('default')
         attrs_list.append(attr_data)
-
-    data_dict = {}
-    for attr in GraphAttrib.objects.filter(graph_fk=obj.id):
-        data_dict[attr.attrib_fk.label] = \
-            attrib_str_to_value(attr.attrib_fk.type_fk.raw_type, attr.value_str)
-    return [{"attrs": attrs_list}, {"data": [data_dict]}]
+    return [{"attrs": attrs_list}, {"data": [obj.attribute_json]}]
 
 def get_vertex_json(obj):
     """
@@ -323,8 +318,8 @@ class GraphSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Graph
-        fields = ['id', 'title', 'schema_fk', 'next_vertex_id']
-        read_only_fields = ['next_vertex_id']
+        fields = ['id', 'title', 'schema_fk', 'next_vertex_id', 'next_transaction_id']
+        read_only_fields = ['next_vertex_id', 'next_transaction_id']
 
 
 class GraphAttribSerializer(serializers.ModelSerializer):
