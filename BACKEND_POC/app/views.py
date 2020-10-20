@@ -791,8 +791,9 @@ def EditTransactionAttributes(request):
                                                      tx_id=request.data['tx_id']).last()
             attribute_labels.remove('graph_id')
             attribute_labels.remove('tx_id')
-            return Response({"detail": "Could not find transaction with supplied 'graph_id'/'tx_id' combo."},
-                            status=status.HTTP_404_NOT_FOUND)
+            if transaction is None:
+                return Response({"detail": "Could not find transaction with supplied 'graph_id'/'tx_id' combo."},
+                                status=status.HTTP_404_NOT_FOUND)
 
         if transaction is None:
             return Response({"detail": "No transaction identified - need to supply 'id' or 'graph_id'/'tx_id' combo."},
