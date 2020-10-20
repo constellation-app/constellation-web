@@ -11,6 +11,14 @@ export class BufferBuilder {
         buffer.push(radius);
     }
 
+    static updateNodePosition = (nodePos: number, x: number, y: number, z: number, radius: number, buffer: number[]): void => {
+        const xPos = nodePos * 4;
+        buffer[xPos] = x;
+        buffer[xPos + 1] = y;
+        buffer[xPos + 2] = z;
+        buffer[xPos + 3] = radius;
+    }
+
     static appendNodeVisuals = (backgroundIcon: number, foregoundIcon: number, color: number, selected: boolean, buffer: number[]): void => {
         buffer.push((backgroundIcon << 16) | foregoundIcon);
         buffer.push(color | (selected ? 0x1000000 : 0));
