@@ -698,7 +698,7 @@ def EditVertexAttributes(request):
                                 status=status.HTTP_404_NOT_FOUND)
 
         if 'graph_id' in request.data and 'vx_id' in request.data:
-            vertex = Vertex.objects.filter(graph_fk__id=request.data['graph_id'], vx_id=request.data['tx_id']).last()
+            vertex = Vertex.objects.filter(graph_fk__id=request.data['graph_id'], vx_id=request.data['vx_id']).last()
             attribute_labels.remove('graph_id')
             attribute_labels.remove('vx_id')
             return Response({"detail": "Could not find vertex with supplied 'graph_id'/'tx_id' combo."},
