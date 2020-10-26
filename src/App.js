@@ -3,6 +3,7 @@ import Grid from '@material-ui/core/Grid';
 
 import MenuButton from './MenuButton';
 import GraphComponentTest from './GraphComponentTest';
+import GraphComponent from './GraphComponent';
 import TableView from './TableView';
 
 import './App.css';
@@ -43,7 +44,7 @@ function App() {
               style={{height: window.innerHeight, width: tableViewSideToggled ? '70%' : '95%'}}
         >
           <Grid item style={{height: tableViewToggled ? '65%' : '100%'}}>
-            <GraphComponentTest />
+            <GraphComponent />
           </Grid>
           {tableViewToggled &&
             <Grid item style={{height: '35%'}}>

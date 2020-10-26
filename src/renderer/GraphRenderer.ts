@@ -152,7 +152,9 @@ export class GraphRenderer {
 
     /**
      * Sets the clear color for this GraphRenderer. This is the color that will be 
-     * used as the background of the graph.
+     * used as the background of the graph. When a new graph renderer is created, the clear
+     * color defaults to black.
+     * 
      * @param clearColor - the new clear color specified as [Red, Green, Blue] values 0.0 - 1.0.
      */
     setClearColor = (clearColor: Float32Array): void => {
