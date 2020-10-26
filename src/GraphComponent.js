@@ -18,7 +18,7 @@ import { PanGesture } from './renderer/listeners/PanGesture';
 import { NodeClickSelector } from './renderer/listeners/NodeClickSelector';
 import { Rotator } from './renderer/listeners/Rotator';
 import { ConstellationGraphLoader } from './ConstellationGraphLoader';
-import { ElementList } from './ElementList';
+import { ElementList } from './graph/ElementList';
 
 class GraphComponent extends Component {
 

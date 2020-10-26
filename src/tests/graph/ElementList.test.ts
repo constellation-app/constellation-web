@@ -1,4 +1,4 @@
-import { ElementList } from "../ElementList";
+import { ElementList } from "../../graph/ElementList";
 
 const initialCapacity = 8;
 

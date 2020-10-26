@@ -65,6 +65,52 @@ export class FloatTexture {
         }
     }
 
+    update = (data: Float32Array, start: number, end: number): void => {
+        let count = end - start;
+
+        let startY = Math.floor(start / this.width);
+        let startX = start - startY * this.width;
+        let startLength = startX === 0 ? 0 : (this.width - startX);
+
+        this.gl.activeTexture(this.gl.TEXTURE0 + this.textureUnit);
+
+        if (count <= startLength) {
+            this.gl.texSubImage2D(this.gl.TEXTURE_2D, 
+                0, 
+                startX, startY, 
+                count, 1, 
+                this.srcFormat, this.gl.FLOAT, data.subarray(start * this.elements, end * this.elements));
+        } else {
+            
+            if (startLength > 0) {
+                this.gl.texSubImage2D(this.gl.TEXTURE_2D, 
+                    0, 
+                    startX, startY, 
+                    startLength, 1, 
+                    this.srcFormat, this.gl.FLOAT, data.subarray(start * this.elements, (start + startLength) * this.elements));
+                startY += 1;
+            }
+            
+            let endX = end % this.width;
+            let endY = Math.floor(end / this.width);
+            if (endX > 0) {
+                this.gl.texSubImage2D(this.gl.TEXTURE_2D, 
+                    0, 
+                    0, endY, 
+                    endX, 1, 
+                    this.srcFormat, this.gl.FLOAT, data.subarray((end - endX) * this.elements));
+            }
+
+            if (endY > startY) {
+                this.gl.texSubImage2D(this.gl.TEXTURE_2D, 
+                    0, 
+                    0, startY, 
+                    this.width, endY - startY, 
+                    this.srcFormat, this.gl.FLOAT, data.subarray((start + startLength) * this.elements, (end - endX) * this.elements));
+            }
+        }
+    }
+
     use = (location: WebGLUniformLocation): void => {
         this.gl.uniform1i(location, this.textureUnit);
     }

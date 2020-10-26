@@ -125,6 +125,11 @@ export class GraphRenderer {
         this.requiresUpdate = true;
     }
 
+    updateNodePositions = (nodePositions: Float32Array, start: number, end: number): void => {
+        this.nodePositionTexture.update(nodePositions, start, end);
+        this.requiresUpdate = true;
+    }
+
     updateNodeVisuals = (nodeVisuals: Uint32Array, start: number, end: number): void => {
         this.nodeVisualsTexture.update(nodeVisuals, start, end);
         this.requiresUpdate = true;
