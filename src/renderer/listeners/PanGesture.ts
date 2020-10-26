@@ -50,12 +50,10 @@ export class PanGesture {
     }
 
     handleMouseMove = (event: MouseEvent): void => {
-        console.log('eventdrag=' + event.button);
         var canvasBounds = this.nodeHoverSelector.canvas.getBoundingClientRect();
         const x = event.clientX - canvasBounds.left;
         const y = event.clientY - canvasBounds.top;
 
-        console.log('this.hoverNodeId=' + this.hoverNodeId);
         if (this.hoverNodeId !== null) {
             this.nodeHoverSelector.camera.updatePixelVector(x, y, this.localPixelVector);
 
