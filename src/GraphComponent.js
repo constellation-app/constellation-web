@@ -10,7 +10,7 @@ import { BufferBuilder } from './renderer/utilities/BufferBuilder';
 import { Camera } from './renderer/Camera';
 import { NodeHoverSelector } from './renderer/listeners/NodeHoverSelector';
 import { ZoomGesture } from './renderer/listeners/ZoomGesture';
-// import { PanGesture } from './renderer/listeners/PanGesture';
+import { PanGesture } from './renderer/listeners/PanGesture';
 import { Rotator } from './renderer/listeners/Rotator';
 import { ConstellationGraphLoader } from './ConstellationGraphLoader';
 import { ElementList } from './graph/ElementList';
@@ -172,9 +172,9 @@ displayGraph() {
 
         const nodeHoverSelector = new NodeHoverSelector(this.canvasRef.current, camera, this.graphRenderer, this.nodePositions, this.nodeVisuals, true);
         new ZoomGesture(nodeHoverSelector);
-        // new PanGesture(nodeHoverSelector);
+        new PanGesture(nodeHoverSelector);
         new DragGesture(nodeHoverSelector, (pos, x, y, z) => {
-            if (pos != undefined) {
+            if (pos != undefined && this.posToVxIDMap.get(pos) != undefined) {
                 // Callback from DragGesture is triggered on mouse up after dragging a vertex, construct a message
                 // and post update to backend database.
                 const data = {'id': this.posToVxIDMap.get(pos), 'x': x, 'y': y, 'z': z};
