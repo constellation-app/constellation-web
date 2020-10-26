@@ -7,9 +7,23 @@ import { TextureArray } from "./data/TextureArray";
 import { GlyphRenderer } from './GlyphRenderer';
 import { ArrowProgram } from "./programs/ArrowProgram";
 
+/**
+ * A GraphRenderer renders a graph into an WebGL2RenderingContext. Currently, it has 4 passes:
+ *  1. Nodes are rendered
+ *  2. Links are rendered
+ *  3. Link arrows are rendered
+ *  4. Glyphs are rendered.
+ * 
+ * Currently, the buffers used to hold nodes, links and glyphs are hard-coded to a capacity of 1,048,576 elements.
+ * This forces a hard upper bound on the size of graph that can be rendered. Given the poor performance of rendering
+ * anything bigger than this, it is assumed that this is acceptable for now. The buffers are stored as a 1024x1024 2D
+ * texture meaning that if the GPU is capable of storing bigger textures then this limit can be raised easily.
+ */
 export class GraphRenderer {
 
     readonly gl: WebGLRenderingContext;
+
+    readonly maxIcons: number;
 
     readonly nodeProgram: NodeProgram;
     readonly linkProgram: LinkProgram;
@@ -40,10 +54,13 @@ export class GraphRenderer {
 
     /**
      * Creates a new GraphRenderer.
+     * 
      * @param gl - the WebGL2RenderingContext to render into.
+     * @param maxIcons - the maximum number of different icons that this graph render can display (defaults to 256).
      */
-    constructor(gl: WebGL2RenderingContext) {
+    constructor(gl: WebGL2RenderingContext, maxIcons: number = 256) {
         this.gl = gl;
+        this.maxIcons = maxIcons;
 
         gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0, 0, 0, 1);
@@ -67,7 +84,7 @@ export class GraphRenderer {
         this.glyphFontPositionTexture = new FloatTexture(gl, 4, 3, 1024, 1024);
         this.glyphFontPositionTexture.allocate();
 
-        this.iconTexture = new TextureArray(gl, 5, 4, 256, 256, 16);
+        this.iconTexture = new TextureArray(gl, 5, 4, 256, 256, maxIcons);
         this.iconTexture.allocate();
         
         this.glyphTexture = new TextureArray(gl, 6, 1, 1024, 1024, 80);
@@ -169,8 +186,8 @@ export class GraphRenderer {
     }
 
     /**
-     * Updates the positions of a range of nodes. The nodePositions buffer should be the same length as that originally provided
-     * to the setNodes method and is commonly the same array.
+     * Updates the positions of a range of nodes.
+     * 
      * @param nodePositions - the node positions buffer.
      * @param start - the start of the range (inclusive)
      * @param end - the end of the range (exclusive)
@@ -180,6 +197,13 @@ export class GraphRenderer {
         this.requiresUpdate = true;
     }
 
+    /**
+     * Updates the visuals of a range of nodes.
+     * 
+     * @param nodeVisuals - the node visuals buffer to copy the node visual information from.
+     * @param start - the start of the range (inclusive)
+     * @param end  - the end of the range (exclusive)
+     */
     updateNodeVisuals = (nodeVisuals: Uint32Array, start: number, end: number): void => {
         this.nodeVisualsTexture.update(nodeVisuals, start, end);
         this.requiresUpdate = true;
@@ -202,17 +226,34 @@ export class GraphRenderer {
         this.requiresUpdate = true;
     }
 
+    /**
+     * Sets the size that glyphs will be rendered in the graph.
+     * 
+     * @param glyphSize - the new size that glyphs will be rendered in the graph.
+     */
     setGlyphSize = (glyphSize: number): void => {
         this.glyphSize = glyphSize;
         this.requiresUpdate = true;
     }
 
+    /**
+     * Sets the glyphs that will be rendered in the graph. This will replace any previous glyphs that were being rendered.
+     * The provided buffer can be created by calling the renderText method on the GlyphRenderer that has been provided to this
+     * graph renderer.
+     * 
+     * @param glyphPositions - the buffer storing the new glyphs to be rendered.
+     */
     setGlyphs = (glyphPositions: Float32Array): void => {
         this.glyphCount = glyphPositions.length / this.glyphPositionTexture.elements;
         this.glyphPositionTexture.replace(glyphPositions);
         this.requiresUpdate = true;
     }
 
+    /**
+     * Sets the glyph renderer that will be used to render glyphs on this graph.
+     * 
+     * @param glyphRenderer - the new glyph renderer for this graph.
+     */
     setGlyphRenderer = (glyphRenderer: GlyphRenderer): void => {
         this.glyphRenderer = glyphRenderer;
         this.requiresUpdate = true;
@@ -228,6 +269,10 @@ export class GraphRenderer {
         this.requiresUpdate = true;
     }
 
+    /**
+     * Causes this graph renderer to re-render its contents to its canvas. If nothing has changed that would cause
+     * the rendering to produce a differnt image, the rendering is not performed.
+     */
     render = (): void => {
         if (this.requiresUpdate) {
             const gl = this.gl;
