@@ -45,8 +45,12 @@ export class Rotator {
     }
 
     handleMouseMove = (event: MouseEvent): void => {
+        var canvasBounds = this.canvas.getBoundingClientRect();
+        const mouseX = event.clientX - canvasBounds.left;
+        const mouseY = event.clientY - canvasBounds.top;
+
         if (this.mouseDown) {
-            this.normalizeScreenPoint(event.clientX, event.clientY, this.currentMousePoint);
+            this.normalizeScreenPoint(mouseX, mouseY, this.currentMousePoint);
             Matrix.subtract(this.currentMousePoint, this.mouseDownPoint, this.mouseMoveVector);
             
             const mouseMoveDistance = Matrix.vectorLength(this.mouseMoveVector);

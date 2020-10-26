@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Grid from '@material-ui/core/Grid';
 
 import MenuButton from './MenuButton';
-import GraphComponent from './GraphComponent';
+import GraphComponentTest from './GraphComponentTest';
 import TableView from './TableView';
 
 import './App.css';
@@ -43,7 +43,7 @@ function App() {
               style={{height: window.innerHeight, width: tableViewSideToggled ? '70%' : '95%'}}
         >
           <Grid item style={{height: tableViewToggled ? '65%' : '100%'}}>
-            <GraphComponent />
+            <GraphComponentTest />
           </Grid>
           {tableViewToggled &&
             <Grid item style={{height: '35%'}}>

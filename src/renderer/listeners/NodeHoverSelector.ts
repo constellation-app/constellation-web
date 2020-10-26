@@ -1,7 +1,7 @@
-import { BufferBuilder } from "../utilities/BufferBuilder";
 import { Camera } from "../Camera";
 import { GraphRenderer } from "../GraphRenderer";
 import { Selector } from "../utilities/Selector";
+import { GraphRendererUtilities } from "../utilities/GraphRendererUtilities";
 
 export class NodeHoverSelector {
 
@@ -30,7 +30,8 @@ export class NodeHoverSelector {
     }
 
     mouseMoveHandler = (event: MouseEvent): void => {
-        this.update(event.clientX, event.clientY);
+        var canvasBounds = this.canvas.getBoundingClientRect();
+        this.update(event.clientX - canvasBounds.left, event.clientY - canvasBounds.top);
     }
 
     update = (x: number, y: number): void => {
@@ -41,13 +42,11 @@ export class NodeHoverSelector {
         if (newHoverNodeId !== this.hoverNodeId) {
 
             if (this.hoverNodeId !== null) {
-                BufferBuilder.deselectNode(this.hoverNodeId, this.nodeVisuals);
-                this.graphRenderer.updateNodeVisuals(this.nodeVisuals, this.hoverNodeId, this.hoverNodeId + 1);
+                GraphRendererUtilities.deselectNode(this.graphRenderer, this.nodeVisuals, this.hoverNodeId);
             }
 
             if (newHoverNodeId !== null) {
-                BufferBuilder.selectNode(newHoverNodeId, this.nodeVisuals);
-                this.graphRenderer.updateNodeVisuals(this.nodeVisuals, newHoverNodeId, newHoverNodeId + 1);
+                GraphRendererUtilities.selectNode(this.graphRenderer, this.nodeVisuals, newHoverNodeId);
             }
 
             this.hoverNodeId = newHoverNodeId;

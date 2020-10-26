@@ -140,7 +140,7 @@ displayGraph() {
               glyphRenderer.renderText(i, 0, labels[i], glyphs);
             }
           }
-          this.graphRenderer.setGlyphScale(3);
+          this.graphRenderer.setGlyphSize(3);
           this.graphRenderer.setGlyphs(new Float32Array(glyphs));
           this.graphRenderer.setGlyphColor(new Float32Array([1, 1, 0]));
         });

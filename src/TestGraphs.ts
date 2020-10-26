@@ -1,6 +1,4 @@
-import { GraphRenderer } from "./renderer/GraphRenderer";
 import { BufferBuilder } from "./renderer/utilities/BufferBuilder";
-import { Network } from "./renderer/utilities/Network";
 
 export class TestGraphs {
 
@@ -9,7 +7,7 @@ export class TestGraphs {
         var nodeVisuals: number[] = [];
 
         BufferBuilder.appendNodePosition(10, 0, 10, 3, nodePositions);
-        BufferBuilder.appendNodeVisuals(0, 2, 0x00FF00, false, nodeVisuals);
+        BufferBuilder.appendNodeVisuals(2, 0, 0x00FF00, false, nodeVisuals);
 
         return {
             nodePositions: new Float32Array(nodePositions),
@@ -34,8 +32,8 @@ export class TestGraphs {
           if (x * x + y * y + z * z < radius * radius) {
             BufferBuilder.appendNodePosition(x, y, z, 3, nodePositions);
             BufferBuilder.appendNodeVisuals(
-                backgroundImages[Math.floor(Math.random() * backgroundImages.length)], 
                 foregroundImages[Math.floor(Math.random() * foregroundImages.length)],
+                backgroundImages[Math.floor(Math.random() * backgroundImages.length)], 
                 colors[Math.floor(Math.random() * colors.length)],
                 false,
                 nodeVisuals

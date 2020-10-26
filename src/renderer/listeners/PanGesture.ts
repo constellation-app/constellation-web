@@ -27,12 +27,16 @@ export class PanGesture {
     }
 
     handleMouseDown = (event: MouseEvent): void => {
+        var canvasBounds = this.nodeHoverSelector.canvas.getBoundingClientRect();
+        const x = event.clientX - canvasBounds.left;
+        const y = event.clientY - canvasBounds.top;
+
         if (!event.shiftKey) {
             this.hoverNodeId = this.nodeHoverSelector.getHoverNode();
             if (this.hoverNodeId !== null) {
                 Matrix.world2LocalPoint(this.nodeHoverSelector.nodePositions, this.hoverNodeId * 4, this.nodeHoverSelector.camera.viewMatrix, this.hoverNodePosition);
 
-                this.nodeHoverSelector.camera.updatePixelVector(event.clientX, event.clientY, this.localPixelVector);
+                this.nodeHoverSelector.camera.updatePixelVector(x, y, this.localPixelVector);
                 Matrix.local2WorldVector(this.localPixelVector, 0, this.nodeHoverSelector.camera.viewMatrix, this.worldPixelVector);
                 Matrix.scale(this.worldPixelVector, -this.hoverNodePosition[2], this.worldPixelVector);
                 Matrix.add(this.worldPixelVector, this.nodeHoverSelector.camera.eye, this.dragStartPosition);
@@ -44,8 +48,12 @@ export class PanGesture {
     }
 
     handleMouseMove = (event: MouseEvent): void => {
+        var canvasBounds = this.nodeHoverSelector.canvas.getBoundingClientRect();
+        const x = event.clientX - canvasBounds.left;
+        const y = event.clientY - canvasBounds.top;
+
         if (this.hoverNodeId !== null) {
-            this.nodeHoverSelector.camera.updatePixelVector(event.clientX, event.clientY, this.localPixelVector);
+            this.nodeHoverSelector.camera.updatePixelVector(x, y, this.localPixelVector);
             
             Matrix.local2WorldVector(this.localPixelVector, 0, this.nodeHoverSelector.camera.viewMatrix, this.worldPixelVector);
             Matrix.scale(this.worldPixelVector, this.hoverNodePosition[2], this.worldPixelVector);

@@ -32,7 +32,7 @@ export class ConstellationGraphLoader {
                     const color = ConstellationGraphLoader.loadColor(vertexData[nodeIndex]['color']);
 
                     BufferBuilder.appendNodePosition(x, y, z, radius, nodePositions);
-                    BufferBuilder.appendNodeVisuals(0, 2, color, selected, nodeVisuals);
+                    BufferBuilder.appendNodeVisuals(2, 0, color, selected, nodeVisuals);
                     labels.push(label);
                     vertexIds.set(vertexId, nodeIndex);
                 }

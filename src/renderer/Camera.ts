@@ -22,6 +22,15 @@ export class Camera {
         this.graphRenderer = graphRenderer;
     }
 
+    /**
+     * Updates the projection matrix for this camera.
+     * 
+     * @param width - the width of the screen in pixels.
+     * @param height - the height of the screen in pixels.
+     * @param fieldOfView - the vertical field of view of the camera in radians.
+     * @param near - the depth of the near plane of the camera.
+     * @param far - the depth of the far plane of the camera.
+     */
     setProjection = (width: number, height: number, fieldOfView: number, near: number, far: number): void => {
         this.fieldOfView = fieldOfView;
         this.near = near;
@@ -29,6 +38,12 @@ export class Camera {
         this.setSize(width, height);
     }
 
+    /**
+     * Updates the size of the screen for this camera.
+     * 
+     * @param width - the width of the screen in pixels.
+     * @param height - the height of the screen in pixels.
+     */
     setSize = (width: number, height: number): void => {
         this.width = width;
         this.height = height;
@@ -53,15 +68,30 @@ export class Camera {
         this.graphRenderer.setViewMatrix(this.viewMatrix);
     }
 
+    /**
+     * Updates a specified vector array to reflect the vector from the camera eye point through
+     * a specified pixel on the screen (in local camera space).
+     * 
+     * @param x - the x position of the pixel.
+     * @param y - the y position of the pixel.
+     * @param vector - the vector to update.
+     */
     updatePixelVector = (x: number, y: number, vector: Float32Array): void => {
         let dy = Math.tan(this.fieldOfView * 0.5);
         let dx = dy * this.aspectRatio;
 
-        vector[1] = dy * (1.0 - y * 2.0 / this.height);
-        vector[0] = dx * (x * 2.0 / this.width - 1.0);
+        vector[1] = dy * (1.0 - (y + 0.5) * 2.0 / this.height);
+        vector[0] = dx * ((x + 0.5) * 2.0 / this.width - 1.0);
         vector[2] = -1;
     }
 
+    /**
+     * Returns a vector representing the direction, in local camera space, from the camera eye point
+     * through the center of a pixel on the screen.
+     * 
+     * @param x - the x position of the pixel.
+     * @param y - the y position of the pixel.
+     */
     createPixelVector = (x: number, y: number): Float32Array => {
         let pixelVector = Matrix.createVector();
         this.updatePixelVector(x, y, pixelVector);
