@@ -10,10 +10,11 @@ import { BufferBuilder } from './renderer/utilities/BufferBuilder';
 import { Camera } from './renderer/Camera';
 import { NodeHoverSelector } from './renderer/listeners/NodeHoverSelector';
 import { ZoomGesture } from './renderer/listeners/ZoomGesture';
-import { PanGesture } from './renderer/listeners/PanGesture';
+// import { PanGesture } from './renderer/listeners/PanGesture';
 import { Rotator } from './renderer/listeners/Rotator';
 import { ConstellationGraphLoader } from './ConstellationGraphLoader';
 import { ElementList } from './graph/ElementList';
+import {DragGesture} from "./renderer/listeners/DragGesture";
 
 class GraphComponent extends Component {
 
@@ -31,8 +32,10 @@ class GraphComponent extends Component {
     websocket_endpoint = "ws://127.0.0.1:8000/ws/updates/"
     nodePositions = [];
     nodeVisuals = [];
-    vxIDPosMap = Map;
-    txIDPosMap = Map;
+    vxIDToPosMap = Map;
+    txIDToPosMap = Map;
+    posToVxIDMap = Map;
+    posToTxIDMap = Map;
 
     // update the current displayed graph value by setting the state.
     updateGraphId(value) {
@@ -59,7 +62,7 @@ class GraphComponent extends Component {
         })
         .then((response) => {
           const node = response["json"];
-          BufferBuilder.updateNodePosition(this.vxIDPosMap.get(vertex_id), node["x"], node["y"], node["z"], 1, this.nodePositions);
+          BufferBuilder.updateNodePosition(this.vxIDToPosMap.get(vertex_id), node["x"], node["y"], node["z"], 1, this.nodePositions);
           this.graphRenderer.setNodes(this.nodePositions, this.nodeVisuals);
 
         })
@@ -115,14 +118,26 @@ displayGraph() {
       var gl = controller.gl;
 
       ConstellationGraphLoader.load("http://localhost:8000/graphs/" + this.state.currentGraphId + "/json",
-          (np, nv, labels, lp, nodeIdMap, transIdMap) => {
+          (np, nv, labels, lp, vxIdPosMap, txIdPosMap) => {
         this.graphRenderer = new GraphRenderer(gl);
 
         //TODO: Need wider access to nodes to allow them to be 'updated, I think we also need copy of the JSON so we can 'insert' new bits into it.
         this.nodePositions = np;
         this.nodeVisuals = nv;
-        this.vxIDPosMap = nodeIdMap;
-        this.txIDPosMap = transIdMap;
+        this.vxIDToPosMap = vxIdPosMap;
+        this.txIDToPosMap = txIdPosMap;
+
+        // Create maps position back to vertex, ie the reverse of supplied maps.
+        this.posToVxIDMap = new Map();
+        this.vxIDToPosMap.forEach((vxPos,vx) =>{
+            this.posToVxIDMap.set(vxPos, vx);
+        })
+
+        // Create maps position back to transaction, ie the reverse of supplied maps.
+        this.posToTxIDMap = new Map();
+        this.txIDToPosMap.forEach((txPos,tx) =>{
+             this.posToTxIDMap.set(txPos, tx);
+        })
 
         const camera = new Camera(this.graphRenderer);
         camera.setProjection(1024, 1024, Math.PI * 0.5, 1, 10000);
@@ -157,7 +172,27 @@ displayGraph() {
 
         const nodeHoverSelector = new NodeHoverSelector(this.canvasRef.current, camera, this.graphRenderer, this.nodePositions, this.nodeVisuals, true);
         new ZoomGesture(nodeHoverSelector);
-        new PanGesture(nodeHoverSelector);
+        // new PanGesture(nodeHoverSelector);
+        new DragGesture(nodeHoverSelector, (pos, x, y, z) => {
+            if (pos != undefined) {
+                // Callback from DragGesture is triggered on mouse up after dragging a vertex, construct a message
+                // and post update to backend database.
+                const data = {'id': this.posToVxIDMap.get(pos), 'x': x, 'y': y, 'z': z};
+                fetch('http://127.0.0.1:8000/edit_vertex_attribs/',
+                    {
+                        method: 'POST',
+                        headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)})
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Success:', data);
+                    })
+                    .catch((error) => {
+                        console.error('TODO: Error:', error);
+                    });
+            }
+        });
+
         new Rotator(this.canvasRef.current, camera);
       });
 }

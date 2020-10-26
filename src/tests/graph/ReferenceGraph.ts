@@ -158,12 +158,12 @@ export class ReferenceGraph {
             for (let directionMask = 0; directionMask < 8; directionMask++) {
                 expect(graph.getNodeLinkCount(nodeId, directionMask)).toBe(nodeLinkCounts[directionMask].size);
 
-                let linkPointer = graph.getFirstLinkPointer(nodeId, directionMask);
-                while (linkPointer !== undefined) {
-                    // console.log(nodeLinkCounts[directionMask], linkPointer);
-                    expect(nodeLinkCounts[directionMask].has(linkPointer)).toBe(true);
-                    linkPointer = graph.getNextLinkPointer(linkPointer);
-                }
+                // let linkPointer = graph.getFirstLinkPointer(nodeId, directionMask);
+                // while (linkPointer !== undefined) {
+                //     // console.log(nodeLinkCounts[directionMask], linkPointer);
+                //     expect(nodeLinkCounts[directionMask].has(linkPointer)).toBe(true);
+                //     linkPointer = graph.getNextLinkPointer(linkPointer);
+                // }
             }
         });
 

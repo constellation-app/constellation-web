@@ -46,7 +46,7 @@ export class ConstellationGraphLoader {
                     const color = ConstellationGraphLoader.loadColor(transactionData[transactionIndex]['color']);
 
                     BufferBuilder.appendLinkPosition(sourceIndex, destinationIndex, 0, 1, color, true, linkPositions);
-                    transactionIds.set(transactionId, nodeIndex);
+                    transactionIds.set(transactionId, transactionIndex);
                 }
                 callback(new Float32Array(nodePositions), new Uint32Array(nodeVisuals), labels, new Uint32Array(linkPositions), vertexIds, transactionIds);
             }

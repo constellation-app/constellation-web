@@ -15,9 +15,11 @@ export class DragGesture {
     private readonly nodeCurrentLocalPosition = Matrix.createVector();
 
     private readonly nodeCurrentWorldPosition = Matrix.createVector();
+    private readonly vertexChangCallback: any;
     
-    constructor(nodeHoverSelector: NodeHoverSelector) {
+    constructor(nodeHoverSelector: NodeHoverSelector, callback: (pos: number, x: number, y: number, z: number) => void) {
         this.nodeHoverSelector = nodeHoverSelector;
+        this.vertexChangCallback = callback;
 
         nodeHoverSelector.canvas.addEventListener('mousedown', this.handleMouseDown);
         nodeHoverSelector.canvas.addEventListener('mousemove', this.handleMouseMove);
@@ -33,7 +35,10 @@ export class DragGesture {
 
         // If the mouse is currently hovering over a node - start the drag operation
         this.hoverNodeId = this.nodeHoverSelector.getHoverNode();
+
         if (this.hoverNodeId !== null) {
+
+            console.log("DEBUG: DRAG started for: " + this.hoverNodeId + ', x=' + this.nodeHoverSelector.nodePositions[this.hoverNodeId * 4]);
 
             // Find the position of the hover node in local camera coordinates.
             Matrix.world2LocalPoint(this.nodeHoverSelector.nodePositions, this.hoverNodeId * 4, this.nodeHoverSelector.camera.viewMatrix, this.nodeStartingLocalPosition);
@@ -76,6 +81,10 @@ export class DragGesture {
     }
 
     handleMouseUp = (event: MouseEvent): void => {
+        if (this.hoverNodeId !== null) {
+            console.log("DEBUG: DRAG is completed for: " + this.hoverNodeId + ', x=' + this.nodeHoverSelector.nodePositions[this.hoverNodeId * 4]);
+            this.vertexChangCallback(this.hoverNodeId, this.nodeCurrentWorldPosition[0], this.nodeCurrentWorldPosition[1], this.nodeCurrentWorldPosition[2]);
+        }
         this.hoverNodeId = null;
     }
 }
