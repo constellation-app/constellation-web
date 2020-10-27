@@ -16,6 +16,10 @@ import { ConstellationGraphLoader } from './ConstellationGraphLoader';
 import { ElementList } from './graph/ElementList';
 import {DragGesture} from "./renderer/listeners/DragGesture";
 
+import TextField from '@material-ui/core/TextField';
+
+const host = '127.0.0.1:8000';
+    
 class GraphComponent extends Component {
 
     canvasRef = React.createRef();
@@ -30,7 +34,7 @@ class GraphComponent extends Component {
       this.updateGraphId = this.updateGraphId.bind(this);
     }
 
-    websocket_endpoint = "ws://127.0.0.1:8000/ws/updates/"
+    websocket_endpoint = 'ws://' + host + '/ws/updates/'
     nodePositions = [];
     nodeVisuals = [];
     vxIDToPosMap = Map;
@@ -53,7 +57,7 @@ class GraphComponent extends Component {
 
     // Load a vertex into the buffer using a fetch request.
   loadVertex(vertex_id) {
-    fetch('http://127.0.0.1:8000/vertexes/' + vertex_id )
+    fetch('http://' + host + '/vertexes/' + vertex_id )
         .then((response) => {
           if (response.ok) {
             return response.json();
@@ -117,7 +121,7 @@ displayGraph() {
   var controller = new CanvasController(this.canvasRef.current);
       var gl = controller.gl;
 
-      ConstellationGraphLoader.load("http://localhost:8000/graphs/" + this.state.currentGraphId + "/json",
+      ConstellationGraphLoader.load('http://' + host + "/graphs/" + this.state.currentGraphId + "/json",
           (np, nv, labels, lp, vxIdPosMap, txIdPosMap) => {
         this.graphRenderer = new GraphRenderer(gl);
 
@@ -178,7 +182,7 @@ displayGraph() {
                 // Callback from DragGesture is triggered on mouse up after dragging a vertex, construct a message
                 // and post update to backend database.
                 const data = {'graph_id': this.state.currentGraphId, 'vx_id': this.posToVxIDMap.get(pos), 'x': x, 'y': y, 'z': z};
-                fetch('http://127.0.0.1:8000/edit_vertex_attribs/',
+                fetch('http://' + host + '/edit_vertex_attribs/',
                     {
                         method: 'POST',
                         headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
@@ -200,8 +204,18 @@ displayGraph() {
     render() {
         return (
           <div>
-            current graphId to display: 
-            <input style={{width: '100px'}} type="number" value={this.state.currentGraphId} onChange={this.updateGraphId}/>
+          <TextField
+              id="outlined-number"
+              label="Graph #"
+              type="number"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              variant="outlined"
+              defaultValue={this.state.currentGraphId}
+              onChange={this.updateGraphId}
+            />
+            <hr/>
             <canvas ref={this.canvasRef} />
           </div>
         )
