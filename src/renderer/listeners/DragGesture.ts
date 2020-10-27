@@ -87,7 +87,7 @@ export class DragGesture {
 
     handleMouseUp = (event: MouseEvent): void => {
         if (event.button === 0) {
-            if (this.hoverNodeId !== null && this.hoverNodeId > 0) {
+            if (this.hoverNodeId !== null) {
                 console.log("DEBUG: DRAG is completed for: " + this.hoverNodeId + ', x=' + this.nodeHoverSelector.nodePositions[this.hoverNodeId * 4]);
                 this.vertexChangCallback(this.hoverNodeId, this.nodeCurrentWorldPosition[0], this.nodeCurrentWorldPosition[1], this.nodeCurrentWorldPosition[2]);
             }

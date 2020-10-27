@@ -24,7 +24,8 @@ class GraphComponent extends Component {
     constructor(){
       super()
       this.state = {
-        currentGraphId: Number()
+        // currentGraphId: Number()
+        currentGraphId: 1
       };
       this.updateGraphId = this.updateGraphId.bind(this);
     }
@@ -65,8 +66,6 @@ class GraphComponent extends Component {
           console.log('Updating vertex_id=' + vertex_id + ', vx_id=' + response.vx_id + ' position=' + this.vxIDToPosMap.get(response.vx_id));
           BufferBuilder.updateNodePosition(this.vxIDToPosMap.get(response.vx_id), node["x"], node["y"], node["z"], 1, this.nodePositions);
           this.graphRenderer.setNodes(this.nodePositions, this.nodeVisuals);
-          // console.log(this.nodePositions);
-
         })
         .catch((error) => {
               console.log('TODO invalid Vertex:' + vertex_id);
