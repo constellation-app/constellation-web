@@ -64,6 +64,7 @@ class GraphComponent extends Component {
           const node = response["json"];
           BufferBuilder.updateNodePosition(this.vxIDToPosMap.get(vertex_id), node["x"], node["y"], node["z"], 1, this.nodePositions);
           this.graphRenderer.setNodes(this.nodePositions, this.nodeVisuals);
+          // console.log(this.nodePositions);
 
         })
         .catch((error) => {
@@ -177,7 +178,7 @@ displayGraph() {
             if (pos != undefined && this.posToVxIDMap.get(pos) != undefined) {
                 // Callback from DragGesture is triggered on mouse up after dragging a vertex, construct a message
                 // and post update to backend database.
-                const data = {'id': this.posToVxIDMap.get(pos), 'x': x, 'y': y, 'z': z};
+                const data = {'graph_id': this.state.currentGraphId, 'vx_id': this.posToVxIDMap.get(pos), 'x': x, 'y': y, 'z': z};
                 fetch('http://127.0.0.1:8000/edit_vertex_attribs/',
                     {
                         method: 'POST',
