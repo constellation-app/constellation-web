@@ -62,7 +62,8 @@ class GraphComponent extends Component {
         })
         .then((response) => {
           const node = response["json"];
-          BufferBuilder.updateNodePosition(this.vxIDToPosMap.get(vertex_id), node["x"], node["y"], node["z"], 1, this.nodePositions);
+          console.log('Updating vertex_id=' + vertex_id + ', vx_id=' + response.vx_id + ' position=' + this.vxIDToPosMap.get(response.vx_id));
+          BufferBuilder.updateNodePosition(this.vxIDToPosMap.get(response.vx_id), node["x"], node["y"], node["z"], 1, this.nodePositions);
           this.graphRenderer.setNodes(this.nodePositions, this.nodeVisuals);
           // console.log(this.nodePositions);
 
