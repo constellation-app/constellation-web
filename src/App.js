@@ -5,12 +5,13 @@ import MenuButton from './MenuButton';
 import GraphComponentTest from './GraphComponentTest';
 import GraphComponent from './GraphComponent';
 import TableView from './TableView';
+import TableViewComponent from './TableViewComponent';
 
 import './App.css';
 
 function App() {
   
-  const [tableViewToggled, setTableViewToggled] = useState(false);
+  const [tableViewToggled, setTableViewToggled] = useState(true);
   const [tableViewSideToggled, setTableViewSideToggled] = useState(false);
 
   function toggleTableView() {
@@ -35,7 +36,7 @@ function App() {
         {tableViewSideToggled &&
           <Grid container direction="column" style={{height: window.innerHeight, width: '25%'}}>
             <Grid item style={{height: '100%', width: '100%'}}>
-              <TableView />
+              <TableViewComponent />
             </Grid>
           </Grid>
         }
@@ -48,7 +49,7 @@ function App() {
           </Grid>
           {tableViewToggled &&
             <Grid item style={{height: '35%'}}>
-              <TableView />
+              <TableViewComponent />
             </Grid>
           }
         </Grid>

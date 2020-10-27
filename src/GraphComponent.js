@@ -46,7 +46,7 @@ class GraphComponent extends Component {
         currentGraphId: Id
       };
     },() => {
-      console.log("in callback of setting state");
+      console.log("GraphView: in callback of setting state");
       this.displayGraph();
     })
     }
@@ -58,17 +58,16 @@ class GraphComponent extends Component {
           if (response.ok) {
             return response.json();
           } else {
-            throw new Error('Unable to load Vertex with id=' + vertex_id);
+            throw new Error('GraphView: Unable to load Vertex with id=' + vertex_id);
           }
         })
         .then((response) => {
           const node = response["json"];
-          console.log('Updating vertex_id=' + vertex_id + ', vx_id=' + response.vx_id + ' position=' + this.vxIDToPosMap.get(response.vx_id));
           BufferBuilder.updateNodePosition(this.vxIDToPosMap.get(response.vx_id), node["x"], node["y"], node["z"], 1, this.nodePositions);
           this.graphRenderer.setNodes(this.nodePositions, this.nodeVisuals);
         })
         .catch((error) => {
-              console.log('TODO invalid Vertex:' + vertex_id);
+              console.log('TODO GraphView: invalid Vertex:' + vertex_id);
         });
   }
 
@@ -89,7 +88,7 @@ class GraphComponent extends Component {
             this.loadVertex(response["vertex_id"]);
           }
           else if (response["type"] === "Transaction" || response["type"] === "TransactionAttrib")  {
-            console.log('TODO Transaction/TransactionAttrib create');
+            console.log('TODO GraphView: Transaction/TransactionAttrib create');
           }
         }
         else if (response["operation"] === "UPDATE") {
@@ -97,11 +96,11 @@ class GraphComponent extends Component {
             this.loadVertex(response["vertex_id"]);
           }
           else if (response["type"] === "Transaction" || response["type"] === "TransactionAttrib")  {
-            console.log('TODO Transaction/TransactionAttrib update');
+            console.log('TODO GraphView: Transaction/TransactionAttrib update');
           }
         }
         else if (response["operation"] === "DELETE") {
-          console.log('TODO Delete');
+          console.log('TODO GraphView: Delete');
         }
       }
     }
