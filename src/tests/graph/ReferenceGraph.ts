@@ -46,14 +46,14 @@ export class ReferenceGraph {
             nodeB = temp;
         }
 
-        let link = nodeA.linkPointers.get(nodeB.id * 2);
+        let link = nodeA.links.get(nodeB.id);
 
         if (link === undefined) {
             const linkId = this.availableLinkIds.length === 0 ? this.links.size : this.availableLinkIds.pop()!;
             link = new Link(linkId, nodeA, nodeB);
             this.links.set(linkId, link);
-            nodeA.linkPointers.set(linkId * 2, link);
-            nodeB.linkPointers.set(linkId * 2 + 1, link);
+            nodeA.links.set(nodeB.id, link);
+            nodeB.links.set(nodeA.id, link);
         }
 
         return link.id;
@@ -115,8 +115,8 @@ export class ReferenceGraph {
     deleteLink = (linkId: number): boolean => {
         const link = this.links.get(linkId);
         if (link !== undefined && link.edges[0] === undefined  && link.edges[1] === undefined && link.edges[2] === undefined) {
-            link.lowNode.linkPointers.delete(link.id * 2);
-            link.highNode.linkPointers.delete(link.id * 2 + 1);
+            link.lowNode.links.delete(link.highNode.id);
+            link.highNode.links.delete(link.lowNode.id);
             this.links.delete(linkId);
             this.availableLinkIds.push(linkId);
             return true;
@@ -126,7 +126,7 @@ export class ReferenceGraph {
 
     deleteNode = (nodeId: number): boolean => {
         const node = this.nodes.get(nodeId);
-        if (node !== undefined && node.linkPointers.size === 0) {
+        if (node !== undefined && node.links.size === 0) {
             this.nodes.delete(nodeId);
             this.availableNodeIds.push(nodeId);
             return true;
@@ -134,8 +134,8 @@ export class ReferenceGraph {
         return false;
     }
 
-    getNodeLinkCount = (nodeId: number, directionMask: number): number => {
-        return this.nodes.get(nodeId)!.getNodeLinkCounts()[directionMask].size;
+    getNodeLinkCount = (nodeId: number, directionCategory: number): number => {
+        return this.nodes.get(nodeId)!.getNodeLinksByCategory()[directionCategory].size;
     }
 
     compare = (graph: Graph): void => {
@@ -154,15 +154,15 @@ export class ReferenceGraph {
         }
 
         this.nodes.forEach((node, nodeId) => {
-            const nodeLinkCounts = node.getNodeLinkCounts();
+            const nodeLinksByCategory = node.getNodeLinksByCategory();
             for (let directionMask = 0; directionMask < 8; directionMask++) {
-                expect(graph.getNodeLinkCount(nodeId, directionMask)).toBe(nodeLinkCounts[directionMask].size);
+                expect(graph.getNodeLinkCount(nodeId, directionMask)).toBe(nodeLinksByCategory[directionMask].size);
 
-                let linkPointer = graph.getFirstLinkPointer(nodeId, directionMask);
-                while (linkPointer !== undefined) {
-                    // console.log(nodeLinkCounts[directionMask], linkPointer);
-                    expect(nodeLinkCounts[directionMask].has(linkPointer)).toBe(true);
-                    linkPointer = graph.getNextLinkPointer(linkPointer);
+                let linkEnd = graph.getFirstLinkEnd(nodeId, directionMask);
+                while (linkEnd !== undefined) {
+                    expect(nodeLinksByCategory[directionMask].has(linkEnd)).toBe(true);
+                    nodeLinksByCategory[directionMask].delete(linkEnd);
+                    linkEnd = graph.getNextLinkEnd(linkEnd);
                 }
             }
         });
@@ -194,41 +194,25 @@ export class ReferenceGraph {
 
 class Node {
     readonly id: number;
-    readonly linkPointers = new Map<number, Link>();
+    readonly links = new Map<number, Link>();
 
     constructor(id: number) {
         this.id = id;
     }
 
-    getNodeLinkCounts = (): Set<number>[] => {
-        const categoryCounts = new Array<Set<number>>(new Set<number>(), new Set<number>(), new Set<number>(), new Set<number>(), new Set<number>(), new Set<number>(), new Set<number>(), new Set<number>());
-        this.linkPointers.forEach((link, linkPointer) => {
-            const otherNodeId = link.lowNode === this ? link.highNode.id : link.lowNode.id;
-            let category = 0;
-            if (otherNodeId > this.id || (otherNodeId === this.id && (linkPointer & 1) != 0)) {
-                if (link.edges[Graph.UPHILL] !== undefined) {
-                    category |= Graph.OUTGOING;
-                }
-                if (link.edges[Graph.DOWNHILL] !== undefined) {
-                    category |= Graph.INCOMING;
-                }
-                if (link.edges[Graph.FLAT] !== undefined) {
-                    category |= Graph.UNDIRECTED;
-                }
-            } else {
-                if (link.edges[Graph.DOWNHILL] !== undefined) {
-                    category |= Graph.OUTGOING;
-                }
-                if (link.edges[Graph.UPHILL] !== undefined) {
-                    category |= Graph.INCOMING;
-                }
-                if (link.edges[Graph.FLAT] !== undefined) {
-                    category |= Graph.UNDIRECTED;
-                }
+    getNodeLinksByCategory = (): Set<number>[] => {
+        const counts = [new Set<number>(), new Set<number>(), new Set<number>(), new Set<number>(), new Set<number>(), new Set<number>(), new Set<number>(), new Set<number>()];
+        this.links.forEach((link, otherNodeId) => {
+            if (this.id === link.lowNode.id) {
+                const lowCategory = (link.edges[0] === undefined ? 0 : 1) | (link.edges[1] === undefined ? 0 : 2) | (link.edges[2] === undefined ? 0 : 4);
+                counts[lowCategory].add(link.id * 2);
             }
-            categoryCounts[category].add(linkPointer);
+            if (this.id === link.highNode.id) {
+                const highCategory = (link.edges[0] === undefined ? 0 : 2) | (link.edges[1] === undefined ? 0 : 1) | (link.edges[2] === undefined ? 0 : 4);
+                counts[highCategory].add(link.id * 2 + 1);
+            }
         });
-        return categoryCounts;
+        return counts;
     }
 }
 
