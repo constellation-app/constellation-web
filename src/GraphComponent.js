@@ -14,7 +14,12 @@ import { PanGesture } from './renderer/listeners/PanGesture';
 import { Rotator } from './renderer/listeners/Rotator';
 import { ConstellationGraphLoader } from './ConstellationGraphLoader';
 import { ElementList } from './graph/ElementList';
+import { DragGesture } from "./renderer/listeners/DragGesture";
 
+import TextField from '@material-ui/core/TextField';
+
+const host = '127.0.0.1:8000';
+    
 class GraphComponent extends Component {
 
     canvasRef = React.createRef();
@@ -23,16 +28,19 @@ class GraphComponent extends Component {
     constructor(){
       super()
       this.state = {
-        currentGraphId: Number()
+        // currentGraphId: Number()
+        currentGraphId: 1
       };
       this.updateGraphId = this.updateGraphId.bind(this);
     }
 
-    websocket_endpoint = "ws://127.0.0.1:8000/ws/updates/"
+    websocket_endpoint = 'ws://' + host + '/ws/updates/'
     nodePositions = [];
     nodeVisuals = [];
-    vxIDPosMap = Map;
-    txIDPosMap = Map;
+    vxIDToPosMap = Map;
+    txIDToPosMap = Map;
+    posToVxIDMap = Map;
+    posToTxIDMap = Map;
 
     // update the current displayed graph value by setting the state.
     updateGraphId(value) {
@@ -42,29 +50,28 @@ class GraphComponent extends Component {
         currentGraphId: Id
       };
     },() => {
-      console.log("in callback of setting state");
+      console.log("GraphView: in callback of setting state");
       this.displayGraph();
     })
     }
 
     // Load a vertex into the buffer using a fetch request.
   loadVertex(vertex_id) {
-    fetch('http://127.0.0.1:8000/vertexes/' + vertex_id )
+    fetch('http://' + host + '/vertexes/' + vertex_id )
         .then((response) => {
           if (response.ok) {
             return response.json();
           } else {
-            throw new Error('Unable to load Vertex with id=' + vertex_id);
+            throw new Error('GraphView: Unable to load Vertex with id=' + vertex_id);
           }
         })
         .then((response) => {
           const node = response["json"];
-          BufferBuilder.updateNodePosition(this.vxIDPosMap.get(vertex_id), node["x"], node["y"], node["z"], 1, this.nodePositions);
+          BufferBuilder.updateNodePosition(this.vxIDToPosMap.get(response.vx_id), node["x"], node["y"], node["z"], 1, this.nodePositions);
           this.graphRenderer.setNodes(this.nodePositions, this.nodeVisuals);
-
         })
         .catch((error) => {
-              console.log('TODO invalid Vertex:' + vertex_id);
+              console.log('TODO GraphView: invalid Vertex:' + vertex_id);
         });
   }
 
@@ -79,13 +86,13 @@ class GraphComponent extends Component {
       const response = JSON.parse(message["message"])
       console.log("response: " + evt.data);
 
-      if (response["graph_id"] == this.state.currentGraphId) {
+      if (response["graph_id"] === this.state.currentGraphId) {
         if (response["operation"] === "CREATE") {
           if (response["type"] === "Vertex" || response["type"] === "VertexAttrib")  {
             this.loadVertex(response["vertex_id"]);
           }
           else if (response["type"] === "Transaction" || response["type"] === "TransactionAttrib")  {
-            console.log('TODO Transaction/TransactionAttrib create');
+            console.log('TODO GraphView: Transaction/TransactionAttrib create');
           }
         }
         else if (response["operation"] === "UPDATE") {
@@ -93,11 +100,11 @@ class GraphComponent extends Component {
             this.loadVertex(response["vertex_id"]);
           }
           else if (response["type"] === "Transaction" || response["type"] === "TransactionAttrib")  {
-            console.log('TODO Transaction/TransactionAttrib update');
+            console.log('TODO GraphView: Transaction/TransactionAttrib update');
           }
         }
         else if (response["operation"] === "DELETE") {
-          console.log('TODO Delete');
+          console.log('TODO GraphView: Delete');
         }
       }
     }
@@ -114,15 +121,27 @@ displayGraph() {
   var controller = new CanvasController(this.canvasRef.current);
       var gl = controller.gl;
 
-      ConstellationGraphLoader.load("http://localhost:8000/graphs/" + this.state.currentGraphId + "/json",
-          (np, nv, labels, lp, nodeIdMap, transIdMap) => {
+      ConstellationGraphLoader.load('http://' + host + "/graphs/" + this.state.currentGraphId + "/json",
+          (np, nv, labels, lp, vxIdPosMap, txIdPosMap) => {
         this.graphRenderer = new GraphRenderer(gl);
 
         //TODO: Need wider access to nodes to allow them to be 'updated, I think we also need copy of the JSON so we can 'insert' new bits into it.
         this.nodePositions = np;
         this.nodeVisuals = nv;
-        this.vxIDPosMap = nodeIdMap;
-        this.txIDPosMap = transIdMap;
+        this.vxIDToPosMap = vxIdPosMap;
+        this.txIDToPosMap = txIdPosMap;
+
+        // Create maps position back to vertex, ie the reverse of supplied maps.
+        this.posToVxIDMap = new Map();
+        this.vxIDToPosMap.forEach((vxPos,vx) =>{
+            this.posToVxIDMap.set(vxPos, vx);
+        })
+
+        // Create maps position back to transaction, ie the reverse of supplied maps.
+        this.posToTxIDMap = new Map();
+        this.txIDToPosMap.forEach((txPos,tx) =>{
+             this.posToTxIDMap.set(txPos, tx);
+        })
 
         const camera = new Camera(this.graphRenderer);
         camera.setProjection(1024, 1024, Math.PI * 0.5, 1, 10000);
@@ -158,6 +177,26 @@ displayGraph() {
         const nodeHoverSelector = new NodeHoverSelector(this.canvasRef.current, camera, this.graphRenderer, this.nodePositions, this.nodeVisuals, true);
         new ZoomGesture(nodeHoverSelector);
         new PanGesture(nodeHoverSelector);
+        new DragGesture(nodeHoverSelector, (pos, x, y, z) => {
+            if (pos !== undefined && this.posToVxIDMap.get(pos) !== undefined) {
+                // Callback from DragGesture is triggered on mouse up after dragging a vertex, construct a message
+                // and post update to backend database.
+                const data = {'graph_id': this.state.currentGraphId, 'vx_id': this.posToVxIDMap.get(pos), 'x': x, 'y': y, 'z': z};
+                fetch('http://' + host + '/edit_vertex_attribs/',
+                    {
+                        method: 'POST',
+                        headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)})
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Success:', data);
+                    })
+                    .catch((error) => {
+                        console.error('TODO: Error:', error);
+                    });
+            }
+        });
+
         new Rotator(this.canvasRef.current, camera);
       });
 }
@@ -165,8 +204,18 @@ displayGraph() {
     render() {
         return (
           <div>
-            current graphId to display: 
-            <input style={{width: '100px'}} type="number" value={this.state.currentGraphId} onChange={this.updateGraphId}/>
+          <TextField
+              id="outlined-number"
+              label="Graph #"
+              type="number"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              variant="outlined"
+              defaultValue={this.state.currentGraphId}
+              onChange={this.updateGraphId}
+            />
+            <hr/>
             <canvas ref={this.canvasRef} />
           </div>
         )
