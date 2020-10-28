@@ -32,7 +32,7 @@ export class ElementList {
         }
     }
 
-    private increaseCapacity = (capacity: number): void => {
+    private increaseCapacity(capacity: number): void {
         this.id2Position.length = capacity;
         this.position2Id.length = capacity;
 

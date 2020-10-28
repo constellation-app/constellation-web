@@ -39,7 +39,7 @@ describe('Random add/delete test', () => {
             } else {
                 parents[childId] = -1
                 children[parentId] = children[parentId].filter((value) => value !== childId);
-                e.deleteChild(parentId, childId);
+                e.deleteChild(childId);
                 // console.log("Removed: ", childId, " from: ", parentId);
             }
 

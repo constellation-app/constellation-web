@@ -343,7 +343,7 @@ describe('Random add/delete tests', () => {
         const output = false;
         const rg = new ReferenceGraph();
 
-        for (let trial = 0; trial < 500; trial++) {
+        for (let trial = 0; trial < 100; trial++) {
             const operation = Math.floor(Math.random() * 7);
             switch (operation) {
                 case 0: // Add node

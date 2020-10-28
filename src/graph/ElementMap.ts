@@ -3,19 +3,21 @@ export class ElementMap {
     private firstChild: (number | undefined)[];
     private nextChild: (number | undefined)[];
     private previousChild: number[];
+    private childParents: Array<number>;
 
     constructor(parentCapacity: number, childCapacity: number) {
         this.childCount = new Array<number>(parentCapacity);
         this.firstChild = new Array<number>(parentCapacity);
         this.nextChild = new Array<number>(childCapacity);
         this.previousChild = new Array<number>(childCapacity);
+        this.childParents = new Array<number>(childCapacity);
 
         for (let parentId = 0; parentId < parentCapacity; parentId++) {
             this.childCount[parentId] = 0;
         }
     }
 
-    setParentCapacity = (parentCapacity: number): void => {
+    setParentCapacity(parentCapacity: number): void {
         if (parentCapacity > this.childCount.length) {
             
             const originalCapacity = this.childCount.length;
@@ -29,26 +31,30 @@ export class ElementMap {
         }
     }
 
-    setChildCapacity = (childCapacity: number): void => {
+    setChildCapacity(childCapacity: number): void {
         this.nextChild.length = childCapacity;
         this.previousChild.length = childCapacity;
+        this.childParents.length = childCapacity;
     }
 
-    addChild = (parentId: number, childId: number): void => {
+    addChild(parentId: number, childId: number): void {
         if (this.childCount[parentId] === 0) {
             this.firstChild[parentId] = childId;
             this.nextChild[childId] = undefined;
             this.childCount[parentId] = 1;
+            this.childParents[childId] = parentId;
         } else {
             const firstChildId = this.firstChild[parentId]!;
             this.previousChild[firstChildId] = childId;
             this.nextChild[childId] = firstChildId;
             this.firstChild[parentId] = childId;
             this.childCount[parentId]++;
+            this.childParents[childId] = parentId;
         }
     }
 
-    deleteChild = (parentId: number, childId: number): void => {
+    deleteChild(childId: number): void {
+        const parentId = this.childParents[childId];
         const nextChildId = this.nextChild[childId];
         const previousChildId = this.previousChild[childId];
 
@@ -65,15 +71,19 @@ export class ElementMap {
         this.childCount[parentId]--;
     }
 
-    getChildCount = (parentId: number): number => {
+    getChildCount(parentId: number): number {
         return this.childCount[parentId];
     }
     
-    getFirstChild = (parentId: number): number | undefined => {
+    getFirstChild(parentId: number): number | undefined {
         return this.firstChild[parentId];
     }
 
-    getNextChild = (childId: number): number | undefined => {
+    getNextChild(childId: number): number | undefined {
         return this.nextChild[childId];
+    }
+
+    getChildParent(childId: number): number {
+        return this.childParents[childId];
     }
 }

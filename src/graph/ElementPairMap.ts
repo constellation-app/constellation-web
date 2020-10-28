@@ -71,7 +71,7 @@ export class ElementPairMap {
         }
     }
 
-    getValue = (aValue: number, bValue: number): number => {
+    getValue = (aValue: number, bValue: number): number | undefined => {
         const hash = aValue * ElementPairMap.A_MULTIPLIER + bValue * ElementPairMap.B_MULTIPLIER;
         const bucket = hash & (this.buckets.length - 1);
         let id = this.buckets[bucket];
@@ -83,7 +83,7 @@ export class ElementPairMap {
             id = this.nextIds[id];
         }
 
-        return -1;
+        return undefined;
     }
 
     getAverageSearchLength = (): number => {

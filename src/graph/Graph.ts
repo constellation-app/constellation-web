@@ -45,7 +45,6 @@ export class Graph {
     private readonly linkHighNodeIds: number[];
 
     private readonly edgeLinks: number[];
-    private readonly transactionEdges: number[];
 
     private readonly linkMap: ElementPairMap;
     
@@ -56,13 +55,13 @@ export class Graph {
      * The elementType value passed with be one of Graph.NODE, Graph.LINK, Graph.EDGE or Graph.TRANSACTION.
      * The new capacity can then be looked up using getElementCapacity() on this graph.
      */
-    capacityListener: (elementType: number) => void = Graph.DEFAULT_CAPACITY_LISTENER;
+    private capacityListener: (elementType: number) => void = Graph.DEFAULT_CAPACITY_LISTENER;
 
     /**
      * Creates a new graph with the specified element capacities.
      * 
      * @param nodeCapacity - the initial node capacity of the graph.
-     * @param linkCapacity - the initial link capacity of the graph. 
+     * @param linkCapacity - the initial link capacity of the graph.
      * @param edgeCapacity - the initial edge capacity of the graph.
      * @param transactionCapacity - the initial transaction capacity of the graph.
      */
@@ -82,8 +81,7 @@ export class Graph {
         this.linkHighNodeIds = new Array<number>(linkCapacity);
 
         this.edgeLinks = new Array<number>(edgeCapacity);
-        this.transactionEdges = new Array<number>(transactionCapacity);
-
+        
         this.linkMap = new ElementPairMap(this.linkLowNodeIds, this.linkHighNodeIds, linkCapacity);
 
         this.nodeList.capacityListener = () => {
@@ -111,9 +109,12 @@ export class Graph {
         this.transactionList.capacityListener = () => {
             const transactionCapacity = this.transactionList.getCapacity();
             this.edgeTransactionMap.setChildCapacity(transactionCapacity);
-            this.transactionEdges.length = transactionCapacity;
             this.capacityListener(Graph.TRANSACTION);
         }
+    }
+
+    public setCapacityListener(capacityListener: (elementType: number) => void): void {
+        this.capacityListener = capacityListener;
     }
 
     /**
@@ -122,7 +123,7 @@ export class Graph {
      * 
      * @param elementType - the type of element. Must be Graph.NODE, Graph.LINK, Graph.EDGE or Graph.TRANSACTION.
      */
-    getElementCapacity = (elementType: number): number => {
+    getElementCapacity(elementType: number): number {
         return this.elementLists[elementType].getCapacity();
     }
 
@@ -131,7 +132,7 @@ export class Graph {
      * 
      * @param elementType - the type of element. Must be Graph.NODE, Graph.LINK, Graph.EDGE or Graph.TRANSACTION.
      */
-    getElementCount = (elementType: number): number => {
+    getElementCount(elementType: number): number {
         return this.elementLists[elementType].getCount();
     }
 
@@ -141,7 +142,7 @@ export class Graph {
      * @param elementType - the type of element. Must be Graph.NODE, Graph.LINK, Graph.EDGE or Graph.TRANSACTION.
      * @param elementId - the id of the element.
      */
-    elementExists = (elementType: number, elementId: number): boolean => {
+    elementExists(elementType: number, elementId: number): boolean {
         return this.elementLists[elementType].exists(elementId);
     }
 
@@ -150,18 +151,18 @@ export class Graph {
      * 
      * @returns the id of the new node.
      */
-    addNode = (): number => {
+    addNode(): number {
         return this.nodeList.add();
     }
 
     /**
-     * Returns the id of the link that exists between the 2 specified nodes, or -1 if no such link exists.
+     * Returns the id of the link that exists between the 2 specified nodes, or undefined if no such link exists.
      * Links are undirected meaning that the same link will be returned if the 2 parameters are swapped.
      * 
      * @param nodeAId - the id of the first node.
      * @param nodeBId - the id of the second node.
      */
-    getLink = (nodeAId: number, nodeBId: number): number => {
+    getLink(nodeAId: number, nodeBId: number): number | undefined {
         if (nodeAId > nodeBId) {
             return this.linkMap.getValue(nodeBId, nodeAId);
         } else {
@@ -175,11 +176,11 @@ export class Graph {
      * 
      * @param nodeAId - the id of the first node.
      * @param nodeBId - the id of the second node.
-     * @returns the id of the new link, or -1 if a link was unable to be created.
+     * @returns the id of the new link, or undefined if a link was unable to be created.
      */
-    addLink = (nodeAId: number, nodeBId: number): number => {
+    addLink(nodeAId: number, nodeBId: number): number | undefined {
         if (!this.nodeList.exists(nodeAId) || !this.nodeList.exists(nodeBId)) {
-            return -1;
+            return undefined;
         }
 
         if (nodeAId > nodeBId) {
@@ -192,7 +193,7 @@ export class Graph {
 
         let linkId = this.linkMap.getValue(lowNodeId, highNodeId);
 
-        if (linkId === -1) {
+        if (linkId === undefined) {
             linkId = this.linkList.add();
             this.linkLowNodeIds[linkId] = lowNodeId;
             this.linkHighNodeIds[linkId] = highNodeId;
@@ -210,11 +211,11 @@ export class Graph {
      * 
      * @param linkId - the id of the link.
      * @param edgeDirection - the direction of the edge with respect to the link. Must be Graph.UPHILL, Graph.DOWNHILL or Graph.FLAT.
-     * @returns the id of the new edge or -1 if the edge was not able to be created.
+     * @returns the id of the new edge or undefined if the edge was not able to be created.
      */
-    addEdge = (linkId: number, edgeDirection: number): number => {
+    addEdge(linkId: number, edgeDirection: number): number | undefined {
         if (!this.linkList.exists(linkId)) {
-            return -1;
+            return undefined;
         }
 
         let edgeId = this.linkEdgeMap[linkId * 3 + edgeDirection];
@@ -227,8 +228,8 @@ export class Graph {
                                     + (this.linkEdgeMap[linkId * 3 + 2] === undefined ? 0 : 4);
             const newLinkCategory = originalLinkCategory | (1 << edgeDirection);
 
-            this.nodeLinkEndMap.deleteChild(lowNodeId * 8 + originalLinkCategory, linkId * 2);
-            this.nodeLinkEndMap.deleteChild(highNodeId * 8 + Graph.LINK_CATEGORY_SWAPS[originalLinkCategory], linkId * 2 + 1);
+            this.nodeLinkEndMap.deleteChild(linkId * 2);
+            this.nodeLinkEndMap.deleteChild(linkId * 2 + 1);
 
             this.nodeLinkEndMap.addChild(lowNodeId * 8 + newLinkCategory, linkId * 2);
             this.nodeLinkEndMap.addChild(highNodeId * 8 + Graph.LINK_CATEGORY_SWAPS[newLinkCategory], linkId * 2 + 1);
@@ -244,18 +245,16 @@ export class Graph {
      * Adds a new transaction to the specified edge. This will only occur if the edge currently exists.
      * 
      * @param edgeId - the id of the edge.
-     * @returns the id of the new transaction or -1 if the transaction was not able to be created.
+     * @returns the id of the new transaction or undefined if the transaction was not able to be created.
      */
-    addTransaction = (edgeId: number): number => {
+    addTransaction(edgeId: number): number | undefined {
 
         // Ensure that the edge exists in the graph
         if (!this.edgeList.exists(edgeId)) {
-            return -1;
+            return undefined;
         }
 
         const transactionId = this.transactionList.add();
-        this.transactionEdges[transactionId] = edgeId;
-
         this.edgeTransactionMap.addChild(edgeId, transactionId);
 
         return transactionId;
@@ -267,12 +266,12 @@ export class Graph {
      * @param transactionId - the id of the transaction to be deleted.
      * @returns true if the transaction was successfully deleted.
      */
-    deleteTransaction = (transactionId: number): boolean => {
+    deleteTransaction(transactionId: number): boolean {
         // Ensure that the transaction exists
         if (this.transactionList.delete(transactionId)) {
 
             // Delete the transaction from its edge
-            this.edgeTransactionMap.deleteChild(this.transactionEdges[transactionId], transactionId);
+            this.edgeTransactionMap.deleteChild(transactionId);
 
             // Return true to indicate that the transaction was successfully deleted
             return true;
@@ -287,7 +286,7 @@ export class Graph {
      * @param edgeId - the id of the edge to be deleted.
      * @returns true if the edge was successfully deleted.
      */
-    deleteEdge = (edgeId: number): boolean => {
+    deleteEdge(edgeId: number): boolean {
         if (this.edgeList.exists(edgeId) && this.edgeTransactionMap.getChildCount(edgeId) === 0) {
             const linkPointer = this.edgeLinks[edgeId];
             const linkId = linkPointer >> 2;
@@ -301,8 +300,8 @@ export class Graph {
                                     + (this.linkEdgeMap[linkId * 3 + 2] === undefined ? 0 : 4);
             const newLinkCategory = originalLinkCategory ^ (1 << edgeDirection);
 
-            this.nodeLinkEndMap.deleteChild(lowNodeId * 8 + originalLinkCategory, linkId * 2);
-            this.nodeLinkEndMap.deleteChild(highNodeId * 8 + Graph.LINK_CATEGORY_SWAPS[originalLinkCategory], linkId * 2 + 1);
+            this.nodeLinkEndMap.deleteChild(linkId * 2);
+            this.nodeLinkEndMap.deleteChild(linkId * 2 + 1);
 
             this.nodeLinkEndMap.addChild(lowNodeId * 8 + newLinkCategory, linkId * 2);
             this.nodeLinkEndMap.addChild(highNodeId * 8 + Graph.LINK_CATEGORY_SWAPS[newLinkCategory], linkId * 2 + 1);
@@ -322,7 +321,7 @@ export class Graph {
      * @param linkId - the id of the link to be deleted.
      * @returns true if the link was successfully deleted.
      */
-    deleteLink = (linkId: number): boolean => {
+    deleteLink(linkId: number): boolean {
         // Ensure that the link exists and has no edges
         if (this.linkList.exists(linkId) 
                 && this.linkEdgeMap[linkId * 3] === undefined 
@@ -337,8 +336,8 @@ export class Graph {
 
             // Delete the link from the low and high nodes
             // It must be in category 0 for both ends because it has no edges
-            this.nodeLinkEndMap.deleteChild(this.linkLowNodeIds[linkId] * 8, linkId * 2);
-            this.nodeLinkEndMap.deleteChild(this.linkHighNodeIds[linkId] * 8, linkId * 2 + 1);
+            this.nodeLinkEndMap.deleteChild(linkId * 2);
+            this.nodeLinkEndMap.deleteChild(linkId * 2 + 1);
             
             // Return true to indicate that the link was successfully removed
             return true;
@@ -352,7 +351,7 @@ export class Graph {
      * @param nodeId - the id of the node to be deleted.
      * @returns true if the node was successfully deleted.
      */
-    deleteNode = (nodeId: number): boolean => {
+    deleteNode(nodeId: number): boolean {
         if (this.nodeList.exists(nodeId) 
             && this.nodeLinkEndMap.getChildCount(nodeId * 8) === 0
             && this.nodeLinkEndMap.getChildCount(nodeId * 8 + 1) === 0
@@ -374,8 +373,8 @@ export class Graph {
      * 
      * @param transactionId - the id of the transaction.
      */
-    getTransactionEdgeId = (transactionId: number): number => {
-        return this.transactionEdges[transactionId];
+    getTransactionEdgeId(transactionId: number): number {
+        return this.edgeTransactionMap.getChildParent(transactionId);
     }
 
     /**
@@ -383,7 +382,7 @@ export class Graph {
      * 
      * @param edgeId - the id of the edge.
      */
-    getEdgeLinkId = (edgeId: number): number => {
+    getEdgeLinkId(edgeId: number): number {
         return this.edgeLinks[edgeId] >> 2;
     }
 
@@ -393,7 +392,7 @@ export class Graph {
      * 
      * @param edgeId - the id of the edge.
      */
-    getEdgeSourceNodeId = (edgeId: number): number => {
+    getEdgeSourceNodeId(edgeId: number): number {
         const extendedLinkId = this.edgeLinks[edgeId];
         const linkId = extendedLinkId >> 2;
         const edgeDirection = extendedLinkId & 0x3;
@@ -406,7 +405,7 @@ export class Graph {
      * 
      * @param edgeId - the id of the edge.
      */
-    getEdgeDestinationNodeId = (edgeId: number): number => {
+    getEdgeDestinationNodeId(edgeId: number): number {
         const extendedLinkId = this.edgeLinks[edgeId];
         const linkId = extendedLinkId >> 2;
         const edgeDirection = extendedLinkId & 0x3;
@@ -418,7 +417,7 @@ export class Graph {
      * 
      * @param linkId - the id of the link.
      */
-    getLinkLowNodeId = (linkId: number): number => {
+    getLinkLowNodeId(linkId: number): number {
         return this.linkLowNodeIds[linkId];
     }
 
@@ -427,7 +426,7 @@ export class Graph {
      * 
      * @param linkId - the id of the link.
      */
-    getLinkHighNodeId = (linkId: number): number => {
+    getLinkHighNodeId(linkId: number): number {
         return this.linkHighNodeIds[linkId];
     }
 
@@ -437,7 +436,7 @@ export class Graph {
      * @param nodeId - the id of the node.
      * @param directionCategory - a mask representing the desired combination of edge directions the link must have.
      */
-    getNodeLinkCount = (nodeId: number, directionCategory: number): number => {
+    getNodeLinkCount(nodeId: number, directionCategory: number): number {
         return this.nodeLinkEndMap.getChildCount(nodeId * 8 + directionCategory);
     }
 
@@ -456,7 +455,7 @@ export class Graph {
      * @param nodeId - the id of the node.
      * @param directionCategory - a mask representing the desired combination of edge directions the link must have.
      */
-    getFirstLinkEnd = (nodeId: number, directionCategory: number): number | undefined => {
+    getFirstLinkEnd(nodeId: number, directionCategory: number): number | undefined {
         return this.nodeLinkEndMap.getFirstChild(nodeId * 8 + directionCategory);
     }
 
@@ -466,7 +465,7 @@ export class Graph {
      * 
      * @param linkEnd - the id of the link end.
      */
-    getNextLinkEnd = (linkEnd: number): number | undefined => {
+    getNextLinkEnd(linkEnd: number): number | undefined {
         return this.nodeLinkEndMap.getNextChild(linkEnd);
     }
 
@@ -475,7 +474,7 @@ export class Graph {
      * 
      * @param linkEnd - the id of the link end.
      */
-    getLinkEndLink = (linkEnd: number): number => {
+    getLinkEndLink(linkEnd: number): number {
         return linkEnd >> 2;
     }
 
@@ -484,7 +483,7 @@ export class Graph {
      * 
      * @param linkId - the id of the link.
      */
-    getLinkLowLinkEnd = (linkId: number): number => {
+    getLinkLowLinkEnd(linkId: number): number {
         return linkId << 1;
     }
 
@@ -493,7 +492,7 @@ export class Graph {
      * 
      * @param linkId - the id of the link.
      */
-    getLinkHighLinkEnd = (linkId: number): number => {
+    getLinkHighLinkEnd(linkId: number): number {
         return (linkId << 1) + 1;
     }
 
@@ -502,7 +501,7 @@ export class Graph {
      * 
      * @param linkEnd - the id of the link end.
      */
-    getLinkEndNode = (linkEnd: number): number => {
+    getLinkEndNode(linkEnd: number): number {
         return (linkEnd & 1) === 0 ? this.linkLowNodeIds[linkEnd >> 1] : this.linkHighNodeIds[linkEnd >> 1];
     }
 
@@ -511,7 +510,7 @@ export class Graph {
      * 
      * @param linkEnd - the id of the link end.
      */
-    isLinkEndLow = (linkEnd: number): boolean => {
+    isLinkEndLow(linkEnd: number): boolean {
         return (linkEnd & 1) === 0;
     }
 
@@ -520,7 +519,7 @@ export class Graph {
      * 
      * @param linkEnd - the id of the link end.
      */
-    isLinkEndHigh = (linkEnd: number): boolean => {
+    isLinkEndHigh(linkEnd: number): boolean {
         return (linkEnd & 1) === 1;
     }
 
@@ -530,7 +529,7 @@ export class Graph {
      * @param linkEnd - the id of the link end.
      * @param direction - the direction of the desired edge. Must be either Graph.OUTGOING, Graph.INCOMING or Graph.UNDIRECTED.
      */
-    getLinkEndEdge = (linkEnd: number, direction: number): number | undefined => {
+    getLinkEndEdge(linkEnd: number, direction: number): number | undefined {
         if ((linkEnd & 1) === 0) {
             return this.linkEdgeMap[(linkEnd >> 1) * 3 + direction];
         } else {
@@ -543,7 +542,7 @@ export class Graph {
      * 
      * @param edgeId - the id of the edge.
      */
-    getEdgeTransactionCount = (edgeId: number): number => {
+    getEdgeTransactionCount(edgeId: number): number {
         return this.edgeTransactionMap.getChildCount(edgeId);
     }
 
@@ -553,7 +552,7 @@ export class Graph {
      * @param linkId - the id of the link.
      * @param edgeDirection - the direction of the desired edge. Must be either Graph.UPHILL, Graph.DOWNHILL or Graph.FLAT.
      */
-    getLinkEdge = (linkId: number, edgeDirection: number): number | undefined => {
+    getLinkEdge(linkId: number, edgeDirection: number): number | undefined {
         return this.linkEdgeMap[linkId * 3 + edgeDirection];
     }
 }

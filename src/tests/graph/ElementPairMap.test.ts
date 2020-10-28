@@ -47,7 +47,7 @@ describe('Random add/delete test', () => {
 
             for (let i = 0; i < linkCount; i++) {
                 const linkId = e.getValue(linkLowNodes[i], linkHighNodes[i]);
-                expect(linkId !== -1).toBe(included[i]);
+                expect(linkId !== undefined).toBe(included[i]);
             }
         }
 
