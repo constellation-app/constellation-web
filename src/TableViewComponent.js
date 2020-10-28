@@ -7,7 +7,7 @@ import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import TablePagination from '@material-ui/core/TablePagination';
 import { ConstellationTableLoader } from './ConstellationTableLoader';
-import {BufferBuilder} from "./renderer/utilities/BufferBuilder";
+import { BufferBuilder } from "./renderer/utilities/BufferBuilder";
 
 const host = '127.0.0.1:8000';
 
@@ -83,7 +83,7 @@ class TableViewComponent extends Component {
             const message = JSON.parse(evt.data)
             const response = JSON.parse(message["message"])
 
-            if (response["graph_id"] == this.state.currentGraphId) {
+            if (response["graph_id"] === this.state.currentGraphId) {
                 if (response["operation"] === "CREATE") {
                     if (response["type"] === "Vertex" || response["type"] === "VertexAttrib")  {
                         this.loadVertex(response["vertex_id"]);

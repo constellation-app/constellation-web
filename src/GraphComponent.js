@@ -14,7 +14,7 @@ import { PanGesture } from './renderer/listeners/PanGesture';
 import { Rotator } from './renderer/listeners/Rotator';
 import { ConstellationGraphLoader } from './ConstellationGraphLoader';
 import { ElementList } from './graph/ElementList';
-import {DragGesture} from "./renderer/listeners/DragGesture";
+import { DragGesture } from "./renderer/listeners/DragGesture";
 
 import TextField from '@material-ui/core/TextField';
 
@@ -86,7 +86,7 @@ class GraphComponent extends Component {
       const response = JSON.parse(message["message"])
       console.log("response: " + evt.data);
 
-      if (response["graph_id"] == this.state.currentGraphId) {
+      if (response["graph_id"] === this.state.currentGraphId) {
         if (response["operation"] === "CREATE") {
           if (response["type"] === "Vertex" || response["type"] === "VertexAttrib")  {
             this.loadVertex(response["vertex_id"]);
@@ -178,7 +178,7 @@ displayGraph() {
         new ZoomGesture(nodeHoverSelector);
         new PanGesture(nodeHoverSelector);
         new DragGesture(nodeHoverSelector, (pos, x, y, z) => {
-            if (pos != undefined && this.posToVxIDMap.get(pos) != undefined) {
+            if (pos !== undefined && this.posToVxIDMap.get(pos) !== undefined) {
                 // Callback from DragGesture is triggered on mouse up after dragging a vertex, construct a message
                 // and post update to backend database.
                 const data = {'graph_id': this.state.currentGraphId, 'vx_id': this.posToVxIDMap.get(pos), 'x': x, 'y': y, 'z': z};
