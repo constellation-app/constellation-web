@@ -5,6 +5,9 @@ import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
+import { ConstellationAttributeLoader } from './ConstellationAttributeLoader';
+
+const host = '127.0.0.1:8000';
 
 class AttributeEditor extends Component {
 
@@ -13,10 +16,18 @@ class AttributeEditor extends Component {
     constructor() {
         super()
         this.state = {
-            currentGraphId: 1
+            currentGraphId: 1,
+            Vxrows: [],
+            Txrows: []
         };
         this.updateGraphId = this.updateGraphId.bind(this);
         this.addWebSocket();
+
+        ConstellationAttributeLoader.load('http://' + host + "/graphs/" + this.state.currentGraphId + "/json",
+            (vertexAttributes, transactionAttributes) => {
+                this.setState({ Vxrows: vertexAttributes });
+                this.setState({ Txrows: transactionAttributes });
+            });
     }
 
     websocket_endpoint = "ws://127.0.0.1:8000/ws/updates/"
@@ -70,22 +81,28 @@ class AttributeEditor extends Component {
     render() {
         return (
             <>
-                AttributeEditor
-
                 <TableContainer style={{ maxHeight: '100%', height: '82%' }}>
                     <Table stickyHeader className="tableRoot" aria-label="simple table">
                         <TableHead>
                             <TableRow>
-                                <TableCell className="cell">Attribute 1:</TableCell>
-                                <TableCell className="cell" align="right">Value1</TableCell>
-                            </TableRow>
-                            <TableRow>
-                                <TableCell className="cell">Attribute 2:</TableCell>
-                                <TableCell className="cell" align="right">Value2</TableCell>
+                                <TableCell className="cell">Vertex Attributes</TableCell>
+                                <TableCell className="cell" align="right">Type</TableCell>
+                                <TableCell className="cell" align="right">Description</TableCell>
+                                <TableCell className="cell" align="right">Value</TableCell>
                             </TableRow>
 
                         </TableHead>
                         <TableBody>
+                            {this.state.Vxrows.slice().map((row) => (
+                                <TableRow key={row.label}>
+                                    <TableCell component="th" scope="row">
+                                        {row.label}
+                                    </TableCell>
+                                    <TableCell align="right">{row.type}</TableCell>
+                                    <TableCell align="right">{row.descr}</TableCell>
+                                    <TableCell align="right">{row.default}</TableCell>
+                                </TableRow>
+                            ))}
                         </TableBody>
                     </Table>
                 </TableContainer>
