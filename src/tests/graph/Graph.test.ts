@@ -25,42 +25,42 @@ describe('Transactions source and destination node ids are correct', () => {
         const l = g.addLink(n0, n1);
         expect(l).toBe(0);
 
-        expect(g.getNodeLinkCount(n0, Graph.NONE)).toBe(1);
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.NONE)).toBe(1);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.NONE_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.NONE_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(0);
     });
 
     test('a downhill link', () => {
         const l = g.addLink(n1, n0);
         expect(l).toBe(0);
 
-        expect(g.getNodeLinkCount(n0, Graph.NONE)).toBe(1);
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.NONE)).toBe(1);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.NONE_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.NONE_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(0);
     });
 
     test('a loop link', () => {
         const l = g.addLink(n0, n0);
         expect(l).toBe(0);
 
-        expect(g.getNodeLinkCount(n0, Graph.NONE)).toBe(2);
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.NONE)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.NONE_CATEGORY)).toBe(2);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.NONE_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(0);
     });
 
     test('an uphill edge', () => {
@@ -70,14 +70,14 @@ describe('Transactions source and destination node ids are correct', () => {
         const e = g.addEdge(l, Graph.UPHILL);
         expect(e).toBe(0);
 
-        expect(g.getNodeLinkCount(n0, Graph.NONE)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(1);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.NONE)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(1);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.NONE_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.NONE_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(0);
     });
 
     test('an downhill edge', () => {
@@ -87,14 +87,14 @@ describe('Transactions source and destination node ids are correct', () => {
         const e = g.addEdge(l, Graph.DOWNHILL);
         expect(e).toBe(0);
 
-        expect(g.getNodeLinkCount(n0, Graph.NONE)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(1);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.NONE)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(1);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.NONE_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.NONE_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(0);
     });
 
     test('a flat edge', () => {
@@ -104,14 +104,14 @@ describe('Transactions source and destination node ids are correct', () => {
         const e = g.addEdge(l, Graph.FLAT);
         expect(e).toBe(0);
 
-        expect(g.getNodeLinkCount(n0, Graph.NONE)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(1);
-        expect(g.getNodeLinkCount(n1, Graph.NONE)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(1);
+        expect(g.getNodeLinkCount(n0, Graph.NONE_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n1, Graph.NONE_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(1);
     });
 
     test('a flat loop edge', () => {
@@ -121,14 +121,14 @@ describe('Transactions source and destination node ids are correct', () => {
         const e = g.addEdge(l, Graph.FLAT);
         expect(e).toBe(0);
 
-        expect(g.getNodeLinkCount(n0, Graph.NONE)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(2);
-        expect(g.getNodeLinkCount(n1, Graph.NONE)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.NONE_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(2);
+        expect(g.getNodeLinkCount(n1, Graph.NONE_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(0);
     });
 
     test('a uphill loop edge', () => {
@@ -138,14 +138,14 @@ describe('Transactions source and destination node ids are correct', () => {
         const e = g.addEdge(l, Graph.UPHILL);
         expect(e).toBe(0);
 
-        expect(g.getNodeLinkCount(n0, Graph.NONE)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(1);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(1);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.NONE)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.NONE_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.NONE_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(0);
     });
 
     test('a downhill loop edge', () => {
@@ -155,14 +155,14 @@ describe('Transactions source and destination node ids are correct', () => {
         const e = g.addEdge(l, Graph.DOWNHILL);
         expect(e).toBe(0);
 
-        expect(g.getNodeLinkCount(n0, Graph.NONE)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(1);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(1);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.NONE)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.NONE_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.NONE_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(0);
     });
 
     test('an uphill directed transaction', () => {
@@ -175,12 +175,12 @@ describe('Transactions source and destination node ids are correct', () => {
         expect(g.getEdgeSourceNodeId(0)).toBe(n0);
         expect(g.getEdgeDestinationNodeId(0)).toBe(n1);
         expect(g.getEdgeLinkId(0)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(1);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(1);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(0);
     });
 
     test('an downhill directed transaction', () => {
@@ -193,12 +193,12 @@ describe('Transactions source and destination node ids are correct', () => {
         expect(g.getEdgeSourceNodeId(0)).toBe(n1);
         expect(g.getEdgeDestinationNodeId(0)).toBe(n0);
         expect(g.getEdgeLinkId(0)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(1);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(1);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(0);
     });
 
     test('an uphill undirected transaction', () => {
@@ -211,12 +211,12 @@ describe('Transactions source and destination node ids are correct', () => {
         expect(g.getEdgeSourceNodeId(0)).toBe(n0);
         expect(g.getEdgeDestinationNodeId(0)).toBe(n1);
         expect(g.getEdgeLinkId(0)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(1);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(1);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(1);
     });
 
     test('an downhill undirected transaction', () => {
@@ -229,12 +229,12 @@ describe('Transactions source and destination node ids are correct', () => {
         expect(g.getEdgeSourceNodeId(0)).toBe(n0);
         expect(g.getEdgeDestinationNodeId(0)).toBe(n1);
         expect(g.getEdgeLinkId(0)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(1);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(1);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(1);
     });
 
     test('an uphill and downhill loop transaction', () => {
@@ -258,13 +258,13 @@ describe('Transactions source and destination node ids are correct', () => {
 
         expect(g.getEdgeLinkId(1)).toBe(0);
 
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING | Graph.OUTGOING)).toBe(2);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY | Graph.OUTGOING_CATEGORY)).toBe(2);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(0);
     });
 
     test('an uphill directed transaction and 2 downhill directed transactions', () => {
@@ -299,14 +299,14 @@ describe('Transactions source and destination node ids are correct', () => {
         expect(g.getEdgeLinkId(0)).toBe(0);
         expect(g.getEdgeLinkId(1)).toBe(0);
         
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED)).toBe(0);
-        expect(g.getNodeLinkCount(n0, Graph.OUTGOING | Graph.INCOMING)).toBe(1);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.INCOMING)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED)).toBe(0);
-        expect(g.getNodeLinkCount(n1, Graph.OUTGOING | Graph.INCOMING)).toBe(1);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.UNDIRECTED_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n0, Graph.OUTGOING_CATEGORY | Graph.INCOMING_CATEGORY)).toBe(1);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.INCOMING_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.UNDIRECTED_CATEGORY)).toBe(0);
+        expect(g.getNodeLinkCount(n1, Graph.OUTGOING_CATEGORY | Graph.INCOMING_CATEGORY)).toBe(1);
     });
 });
 
@@ -326,16 +326,14 @@ describe('Reference graph tests', () => {
 
         expect(g.getNodeLinkCount(nodeId, 0)).toBe(rg.getNodeLinkCount(nodeId, 0));
 
-        const rgLinkPointers = rg.nodes.get(0)!.getNodeLinkCounts();
+        const rgLinkEnds = rg.nodes.get(0)!.getNodeLinksByCategory();
         
         const gLinkPointers = new Set<number>();
-        let linkPointer = g.getFirstLinkPointer(nodeId, 0);
+        let linkPointer = g.getFirstLinkEnd(nodeId, 0);
         while (linkPointer !== undefined) {
             gLinkPointers.add(linkPointer);
-            linkPointer = g.getNextLinkPointer(linkPointer);
+            linkPointer = g.getNextLinkEnd(linkPointer);
         }
-
-        console.log(rgLinkPointers[0], gLinkPointers);
     });
 });
 
@@ -345,7 +343,7 @@ describe('Random add/delete tests', () => {
         const output = false;
         const rg = new ReferenceGraph();
 
-        for (let trial = 0; trial < 100; trial++) {
+        for (let trial = 0; trial < 500; trial++) {
             const operation = Math.floor(Math.random() * 7);
             switch (operation) {
                 case 0: // Add node
