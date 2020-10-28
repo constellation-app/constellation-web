@@ -6,49 +6,50 @@ import GraphComponentTest from './GraphComponentTest';
 import GraphComponent from './GraphComponent';
 import TableView from './TableView';
 import TableViewComponent from './TableViewComponent';
+import AttributeEditor from './AttributeEditor';
 
 import './App.css';
 
 function App() {
-  
+
   const [tableViewToggled, setTableViewToggled] = useState(true);
-  const [tableViewSideToggled, setTableViewSideToggled] = useState(false);
+  const [AttributeEditorToggled, setAttributeEditorToggled] = useState(false);
 
   function toggleTableView() {
     setTableViewToggled(!tableViewToggled);
   }
 
-  function toggleTableViewSide() {
-    setTableViewSideToggled(!tableViewSideToggled);
+  function toggleAttributeEditor() {
+    setAttributeEditorToggled(!AttributeEditorToggled);
   }
 
   return (
     <div className="App">
       <Grid container>
-        <Grid container direction="column" style={{height: window.innerHeight, width: '5%'}}>
+        <Grid container direction="column" style={{ height: window.innerHeight, width: '5%' }}>
           <Grid item className="buttonHolder">
-            <MenuButton buttonName="Table View on bottom" onClick={toggleTableView} />
+            <MenuButton buttonName="Table View" onClick={toggleTableView} />
           </Grid>
           <Grid item className="buttonHolder">
-            <MenuButton buttonName="Table View on side" onClick={toggleTableViewSide} />
+            <MenuButton buttonName="Attribute Editor" onClick={toggleAttributeEditor} />
           </Grid>
         </Grid>
-        {tableViewSideToggled &&
-          <Grid container direction="column" style={{height: window.innerHeight, width: '25%'}}>
-            <Grid item style={{height: '100%', width: '100%'}}>
-              <TableViewComponent />
+        {AttributeEditorToggled &&
+          <Grid container direction="column" style={{ height: window.innerHeight, width: '25%' }}>
+            <Grid item style={{ height: '100%', width: '100%' }}>
+              <AttributeEditor />
             </Grid>
           </Grid>
         }
-        <Grid container 
-              direction="column" 
-              style={{height: window.innerHeight, width: tableViewSideToggled ? '70%' : '95%'}}
+        <Grid container
+          direction="column"
+          style={{ height: window.innerHeight, width: AttributeEditorToggled ? '70%' : '95%' }}
         >
-          <Grid item style={{height: tableViewToggled ? '65%' : '100%'}}>
+          <Grid item style={{ height: tableViewToggled ? '65%' : '100%' }}>
             <GraphComponent />
           </Grid>
           {tableViewToggled &&
-            <Grid item style={{height: '35%'}}>
+            <Grid item style={{ height: '35%' }}>
               <TableViewComponent />
             </Grid>
           }
