@@ -128,3 +128,4 @@ sketch
 
 # ide files
 .idea
+/nbproject/private/

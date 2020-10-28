@@ -7,11 +7,11 @@ import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import TablePagination from '@material-ui/core/TablePagination';
 import { ConstellationTableLoader } from './ConstellationTableLoader';
-import {BufferBuilder} from "./renderer/utilities/BufferBuilder";
+import { BufferBuilder } from "./renderer/utilities/BufferBuilder";
 
+const host = '127.0.0.1:8000';
 
 class TableViewComponent extends Component {
-
 
     // setting up a state variable to handle the current graph id
     constructor(){
@@ -20,13 +20,13 @@ class TableViewComponent extends Component {
             // currentGraphId: Number()
             currentGraphId: 1,
             page: 0,
-            rowsPerPage: 25,
+            rowsPerPage: 10,
             rows: []
         };
         this.updateGraphId = this.updateGraphId.bind(this);
         this.addWebSocket();
 
-        ConstellationTableLoader.load("http://localhost:8000/graphs/" + this.state.currentGraphId + "/json",
+        ConstellationTableLoader.load('http://' + host + "/graphs/" + this.state.currentGraphId + "/json",
             (vertexes, transactions) => {
                 this.setState({ rows: vertexes });
                 this.vxIDToPosMap = new Map();
@@ -37,7 +37,7 @@ class TableViewComponent extends Component {
             });
     }
 
-    websocket_endpoint = "ws://127.0.0.1:8000/ws/updates/"
+    websocket_endpoint = 'ws://' + host + '/ws/updates/';
     vxIDToPosMap = Map;
 
     // update the current displayed graph value by setting the state.
@@ -54,7 +54,7 @@ class TableViewComponent extends Component {
 
     // Load a vertex into the buffer using a fetch request.
     loadVertex(vertex_id) {
-        fetch('http://127.0.0.1:8000/vertexes/' + vertex_id )
+        fetch('http://' + host + '/vertexes/' + vertex_id )
             .then((response) => {
                 if (response.ok) {
                     return response.json();
@@ -83,7 +83,7 @@ class TableViewComponent extends Component {
             const message = JSON.parse(evt.data)
             const response = JSON.parse(message["message"])
 
-            if (response["graph_id"] == this.state.currentGraphId) {
+            if (response["graph_id"] === this.state.currentGraphId) {
                 if (response["operation"] === "CREATE") {
                     if (response["type"] === "Vertex" || response["type"] === "VertexAttrib")  {
                         this.loadVertex(response["vertex_id"]);
@@ -147,7 +147,7 @@ class TableViewComponent extends Component {
                     </Table>
                 </TableContainer>
                 <TablePagination
-                    rowsPerPageOptions={[25, 50, 100]}
+                    rowsPerPageOptions={[10, 25, 50, 100]}
                     component="div"
                     count={this.state.rows.length}
                     rowsPerPage={this.state.rowsPerPage}
@@ -159,8 +159,6 @@ class TableViewComponent extends Component {
             </>
         )
     }
-
-
 }
 
 export default TableViewComponent;
