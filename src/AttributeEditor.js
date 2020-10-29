@@ -18,20 +18,28 @@ class AttributeEditor extends Component {
         this.state = {
             currentGraphId: 1,
             Vxrows: [],
-            Txrows: []
+            Txrows: [],
+            VxDatarows: [],
+            TxDatarows: []
         };
         this.updateGraphId = this.updateGraphId.bind(this);
         this.addWebSocket();
+        this.refreshAttributes();
 
-        ConstellationAttributeLoader.load('http://' + host + "/graphs/" + this.state.currentGraphId + "/json",
-            (vertexAttributes, transactionAttributes) => {
-                this.setState({ Vxrows: vertexAttributes });
-                this.setState({ Txrows: transactionAttributes });
-            });
     }
 
     websocket_endpoint = "ws://127.0.0.1:8000/ws/updates/"
 
+    // grabs fresh attribute values to load.
+    refreshAttributes() {
+        ConstellationAttributeLoader.load('http://' + host + "/graphs/" + this.state.currentGraphId + "/json",
+            (vertexAttributes, transactionAttributes) => {
+                this.setState({ Vxrows: vertexAttributes[0]['attrs'] });
+                this.setState({ Txrows: transactionAttributes[0]['attrs'] });
+                this.setState({ VxDatarows: vertexAttributes[1]['data'] });
+                this.setState({ TxDatarows: transactionAttributes[1]['data'] });
+            });
+    }
 
     // update the current displayed graph value by setting the state.
     updateGraphId(value) {
@@ -64,7 +72,7 @@ class AttributeEditor extends Component {
                 }
                 else if (response["operation"] === "UPDATE") {
                     if (response["type"] === "Vertex" || response["type"] === "VertexAttrib") {
-                        console.log('TODO AttributeEditor: Transaction/TransactionAttrib update');
+                        this.refreshAttributes();
                     }
                     else if (response["type"] === "Transaction" || response["type"] === "TransactionAttrib") {
                         console.log('TODO AttributeEditor: Transaction/TransactionAttrib update');
@@ -88,19 +96,24 @@ class AttributeEditor extends Component {
                                 <TableCell className="cell">Vertex Attributes</TableCell>
                                 <TableCell className="cell" align="right">Type</TableCell>
                                 <TableCell className="cell" align="right">Description</TableCell>
-                                <TableCell className="cell" align="right">Value</TableCell>
+                                <TableCell className="cell" align="left">Value</TableCell>
                             </TableRow>
-
                         </TableHead>
                         <TableBody>
-                            {this.state.Vxrows.slice().map((row) => (
+                            {this.state.Vxrows.slice(5, 12).map((row, index) => (
+
                                 <TableRow key={row.label}>
-                                    <TableCell component="th" scope="row">
-                                        {row.label}
-                                    </TableCell>
+                                    <TableCell component="th" scope="row">{row.label}</TableCell>
                                     <TableCell align="right">{row.type}</TableCell>
                                     <TableCell align="right">{row.descr}</TableCell>
-                                    <TableCell align="right">{row.default}</TableCell>
+
+                                    <TableCell align="left">
+                                        {this.state.VxDatarows[0]
+                                            && typeof this.state.VxDatarows[0][row.label] !== 'object'
+                                            && this.state.VxDatarows[0][row.label] !== null
+                                            && this.state.VxDatarows[0][row.label]
+                                        }
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

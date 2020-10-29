@@ -13,7 +13,7 @@ export class ConstellationAttributeLoader {
                 console.log(json['vertex'][0]);
                 console.log(json['vertex'][0]['attrs']);
 
-                callback(json['vertex'][0]['attrs'], json['transaction'][0]['attrs']);
+                callback(json['vertex'], json['transaction']);
             }
             // Added to handle the case when an invalid ID of the graph was requested.
             else if (status === 404) {
