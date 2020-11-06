@@ -58,7 +58,7 @@ export class GraphRenderer {
      * @param gl - the WebGL2RenderingContext to render into.
      * @param maxIcons - the maximum number of different icons that this graph render can display (defaults to 256).
      */
-    constructor(gl: WebGL2RenderingContext, maxIcons: number = 256) {
+    constructor(gl: WebGL2RenderingContext, iconMap: Map<string, any>, maxIcons: number = 600) {
         this.gl = gl;
         this.maxIcons = maxIcons;
 
@@ -112,12 +112,10 @@ export class GraphRenderer {
         this.glyphPositionTexture.use(this.glyphProgram.glyphPositionAttributeLocation);
         this.glyphFontPositionTexture.use(this.glyphProgram.glyphFontPositionAttributeLocation);
         this.glyphTexture.use(this.glyphProgram.glyphTextureAttributeLocation);
-        
-        // Temp setup while in development
-        this.iconTexture.setLayerFromURL("white_circle.png", 0, this);
-        this.iconTexture.setLayerFromURL("white_rounded_rectangle.png", 1, this);
-        this.iconTexture.setLayerFromURL("computer.png", 2, this);
-        this.iconTexture.setLayerFromURL("earth.png", 3, this);
+
+        iconMap.forEach((content, name) => {
+            this.iconTexture.setLayerFromURL(content[1], content[0], this);
+        });
     }
 
     /**

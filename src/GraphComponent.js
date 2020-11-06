@@ -17,6 +17,7 @@ import { ElementList } from './graph/ElementList';
 import { DragGesture } from "./renderer/listeners/DragGesture";
 
 import TextField from '@material-ui/core/TextField';
+import {IconManager} from "./renderer/IconManager";
 
 const host = '127.0.0.1:8000';
     
@@ -117,13 +118,14 @@ class GraphComponent extends Component {
 
     // used to display the graph based on a request to the API
 displayGraph() {
-  this.addWebSocket();
-  var controller = new CanvasController(this.canvasRef.current);
+      this.addWebSocket();
+      var controller = new CanvasController(this.canvasRef.current);
       var gl = controller.gl;
+      var icon_manager = new IconManager();
 
-      ConstellationGraphLoader.load('http://' + host + "/graphs/" + this.state.currentGraphId + "/json",
+      ConstellationGraphLoader.load('http://' + host + "/graphs/" + this.state.currentGraphId + "/json", icon_manager,
           (np, nv, labels, lp, vxIdPosMap, txIdPosMap) => {
-        this.graphRenderer = new GraphRenderer(gl);
+        this.graphRenderer = new GraphRenderer(gl, icon_manager.getIconMap());
 
         //TODO: Need wider access to nodes to allow them to be 'updated, I think we also need copy of the JSON so we can 'insert' new bits into it.
         this.nodePositions = np;
