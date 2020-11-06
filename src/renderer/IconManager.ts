@@ -291,7 +291,6 @@ export class IconManager {
         for (let category in this.ICONS) {
             // @ts-ignore
             for (let name in this.ICONS[category]) {
-                console.log(this.iconMap.size);
                 // @ts-ignore
                 this.iconMap.set(category + name, [this.iconMap.size, this.ICONS[category][name]]);
             }
@@ -308,12 +307,10 @@ export class IconManager {
     }
 
     /**
-     * Retrieve details of the icon with supplied name (ie 'Background.Flat Circle') from the iconMap. Returned data
-     * will contain at position 0, the index that the corresponding icon is to be stored  at within the graphics cards
-     * icon TextureArray, the second element being the filename of the icon to store.
+     * Retrieve index of the icon with supplied name.
      * @param name Name (ie 'Background.Flat Circle') of the icon to retrieve information for.
      */
-    getIconInfo = (name : string): any => {
+    getIconIndex = (name : string): any => {
         if (name != undefined) {
             if (this.iconMap.has(name)) {
                 // @ts-ignore

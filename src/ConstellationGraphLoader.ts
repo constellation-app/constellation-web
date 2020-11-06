@@ -27,8 +27,8 @@ export class ConstellationGraphLoader {
                     const selected = vertexData[nodeIndex]['selected'];
                     const label = vertexData[nodeIndex]['Label'] || "vx" + vertexId;
                     const radius = vertexData[nodeIndex]['lradius'] || 1;
-                    const icon = icon_manager.getIconId(vertexData[nodeIndex]['icon']);
-                    const backgroundIcon = icon_manager.getIconId(vertexData[nodeIndex]['background_icon']);
+                    const icon = icon_manager.getIconIndex(vertexData[nodeIndex]['icon']);
+                    const backgroundIcon = icon_manager.getIconIndex(vertexData[nodeIndex]['background_icon']);
                     const color = ConstellationGraphLoader.loadColor(vertexData[nodeIndex]['color']);
 
                     BufferBuilder.appendNodePosition(x, y, z, radius, nodePositions);
