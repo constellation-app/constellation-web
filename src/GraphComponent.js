@@ -17,6 +17,7 @@ import { ConstellationGraphLoader } from './ConstellationGraphLoader';
 import { ElementList } from './graph/ElementList';
 import { DragGesture } from "./renderer/listeners/DragGesture";
 
+import {IconManager} from "./renderer/IconManager";
 
 
 const host = '127.0.0.1:8000';
@@ -79,6 +80,38 @@ class GraphComponent extends Component {
         this.props.handleToUpdate(newId);
     }
 
+    // used to display the graph based on a request to the API
+displayGraph() {
+      this.addWebSocket();
+      var controller = new CanvasController(this.canvasRef.current);
+      var gl = controller.gl;
+      var icon_manager = new IconManager();
+
+      ConstellationGraphLoader.load('http://' + host + "/graphs/" + this.state.currentGraphId + "/json", icon_manager,
+          (np, nv, labels, lp, vxIdPosMap, txIdPosMap) => {
+        this.graphRenderer = new GraphRenderer(gl, icon_manager.getIconMap());
+
+        //TODO: Need wider access to nodes to allow them to be 'updated, I think we also need copy of the JSON so we can 'insert' new bits into it.
+        this.nodePositions = np;
+        this.nodeVisuals = nv;
+        this.vxIDToPosMap = vxIdPosMap;
+        this.txIDToPosMap = txIdPosMap;
+
+        // Create maps position back to vertex, ie the reverse of supplied maps.
+        this.posToVxIDMap = new Map();
+        this.vxIDToPosMap.forEach((vxPos,vx) =>{
+            this.posToVxIDMap.set(vxPos, vx);
+        })
+
+        // Create maps position back to transaction, ie the reverse of supplied maps.
+        this.posToTxIDMap = new Map();
+        this.txIDToPosMap.forEach((txPos,tx) =>{
+             this.posToTxIDMap.set(txPos, tx);
+        })
+
+        const camera = new Camera(this.graphRenderer);
+        camera.setProjection(1024, 1024, Math.PI * 0.5, 1, 10000);
+        camera.lookAt(new Float32Array([400, 0, 300]), new Float32Array([0, 0, 0]), new Float32Array([0, 1, 0]));
 
     addWebSocket() {
         // Initialise WebSocket

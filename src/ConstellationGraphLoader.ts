@@ -1,15 +1,16 @@
 import { BufferBuilder } from "./renderer/utilities/BufferBuilder";
 import { Network } from "./renderer/utilities/Network";
+import { IconManager} from "./renderer/IconManager";
 
 export class ConstellationGraphLoader {
 
-    static load = (url: string, callback: (nodePositions: Float32Array, nodeVisuals: Uint32Array, labels: string[],
+    static load = (url: string, icon_manager: IconManager, callback: (nodePositions: Float32Array, nodeVisuals: Uint32Array, labels: string[],
                                            linkPositions: Uint32Array, vxIdPosMap: Map<number, number>,
                                            txIdPosMap: Map<number, number>) => void): void => {
         Network.get(url, (status, response) => {
             if (status === 200) {
+
                 const json = JSON.parse(response);
-                
                 const nodePositions: number[] = [];
                 const nodeVisuals: number[] = [];
                 const labels: string[] = [];
@@ -26,13 +27,12 @@ export class ConstellationGraphLoader {
                     const selected = vertexData[nodeIndex]['selected'];
                     const label = vertexData[nodeIndex]['Label'] || "vx" + vertexId;
                     const radius = vertexData[nodeIndex]['lradius'] || 1;
-                    const icon = vertexData[nodeIndex]['icon'];
-                    const backgroundIcon = vertexData[nodeIndex]['background_icon'];
-
+                    const icon = icon_manager.getIconIndex(vertexData[nodeIndex]['icon']);
+                    const backgroundIcon = icon_manager.getIconIndex(vertexData[nodeIndex]['background_icon']);
                     const color = ConstellationGraphLoader.loadColor(vertexData[nodeIndex]['color']);
 
                     BufferBuilder.appendNodePosition(x, y, z, radius, nodePositions);
-                    BufferBuilder.appendNodeVisuals(2, 0, color, selected, nodeVisuals);
+                    BufferBuilder.appendNodeVisuals(icon, backgroundIcon, color, selected, nodeVisuals);
                     labels.push(label);
                     vertexIds.set(vertexId, nodeIndex);
                 }
@@ -45,7 +45,7 @@ export class ConstellationGraphLoader {
                     
                     const color = ConstellationGraphLoader.loadColor(transactionData[transactionIndex]['color']);
 
-                    BufferBuilder.appendLinkPosition(sourceIndex, destinationIndex, 0, 1, color, true, linkPositions);
+                    BufferBuilder.appendLinkPosition(sourceIndex, destinationIndex, 0, 0.05, color, true, linkPositions);
                     transactionIds.set(transactionId, transactionIndex);
                 }
                 callback(new Float32Array(nodePositions), new Uint32Array(nodeVisuals), labels, new Uint32Array(linkPositions), vertexIds, transactionIds);
