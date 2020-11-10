@@ -13,48 +13,37 @@ const host = '127.0.0.1:8000';
 
 class TableViewComponent extends Component {
 
+    websocket_endpoint = 'ws://' + host + '/ws/updates/';
+    vxIDToPosMap = Map;
+
     // setting up a state variable to handle the current graph id
-    constructor(){
-        super()
+    constructor(props) {
+        super(props)
         this.state = {
-            // currentGraphId: Number()
-            currentGraphId: 1,
+            currentGraphId: this.props.graphId,
             page: 0,
             rowsPerPage: 10,
             rows: []
         };
         this.updateGraphId = this.updateGraphId.bind(this);
         this.addWebSocket();
-
-        ConstellationTableLoader.load('http://' + host + "/graphs/" + this.state.currentGraphId + "/json",
-            (vertexes, transactions) => {
-                this.setState({ rows: vertexes });
-                this.vxIDToPosMap = new Map();
-                for (var index = 0; index < vertexes.length; index++) {
-                    const vx_id = vertexes[index]["vx_id_"];
-                    this.vxIDToPosMap.set(vx_id, index);
-                }
-            });
     }
-
-    websocket_endpoint = 'ws://' + host + '/ws/updates/';
-    vxIDToPosMap = Map;
 
     // update the current displayed graph value by setting the state.
     updateGraphId(value) {
-        const Id = value.target.value;
+        //const Id = value.target.value;
         this.setState(state => {
             return {
-                currentGraphId: Id
+                currentGraphId: value
             };
-        },() => {
-            console.log("Tableview: in callback of setting state");
+        }, () => {
+            this.refreshTable();
         })
     }
 
     // Load a vertex into the buffer using a fetch request.
     loadVertex(vertex_id) {
-        fetch('http://' + host + '/vertexes/' + vertex_id )
+        fetch('http://' + host + '/vertexes/' + vertex_id)
             .then((response) => {
                 if (response.ok) {
                     return response.json();
@@ -79,24 +68,24 @@ class TableViewComponent extends Component {
     addWebSocket() {
         console.log('setup addWebSocket');
         const ws = new WebSocket(this.websocket_endpoint)
-        ws.onmessage = evt =>{
+        ws.onmessage = evt => {
             const message = JSON.parse(evt.data)
             const response = JSON.parse(message["message"])
 
             if (response["graph_id"] === this.state.currentGraphId) {
                 if (response["operation"] === "CREATE") {
-                    if (response["type"] === "Vertex" || response["type"] === "VertexAttrib")  {
+                    if (response["type"] === "Vertex" || response["type"] === "VertexAttrib") {
                         this.loadVertex(response["vertex_id"]);
                     }
-                    else if (response["type"] === "Transaction" || response["type"] === "TransactionAttrib")  {
+                    else if (response["type"] === "Transaction" || response["type"] === "TransactionAttrib") {
                         console.log('TODO Tableview: Transaction/TransactionAttrib create');
                     }
                 }
                 else if (response["operation"] === "UPDATE") {
-                    if (response["type"] === "Vertex" || response["type"] === "VertexAttrib")  {
+                    if (response["type"] === "Vertex" || response["type"] === "VertexAttrib") {
                         this.loadVertex(response["vertex_id"]);
                     }
-                    else if (response["type"] === "Transaction" || response["type"] === "TransactionAttrib")  {
+                    else if (response["type"] === "Transaction" || response["type"] === "TransactionAttrib") {
                         console.log('TODO Tableview: Transaction/TransactionAttrib update');
                     }
                 }
@@ -115,11 +104,30 @@ class TableViewComponent extends Component {
         this.setState({ page: 0, rowsPerPage: event.target.value });
     };
 
+    componentDidUpdate = (prevProps) => {
+        if (prevProps.graphId !== this.props.graphId) {
+            this.updateGraphId(this.props.graphId);
+        }
+        // TODO: Possibly dont need to refresh every time the props change
+        this.refreshTable();
+    }
+
+    refreshTable() {
+        ConstellationTableLoader.load('http://' + host + "/graphs/" + this.state.currentGraphId + "/json",
+            (vertexes, transactions) => {
+                this.setState({ rows: vertexes });
+                this.vxIDToPosMap = new Map();
+                for (var index = 0; index < vertexes.length; index++) {
+                    const vx_id = vertexes[index]["vx_id_"];
+                    this.vxIDToPosMap.set(vx_id, index);
+                }
+            });
+    }
 
     render() {
         return (
             <>
-                <TableContainer style={{maxHeight: '100%', height: '82%'}}>
+                <TableContainer style={{ maxHeight: '100%', height: '82%' }}>
                     <Table stickyHeader className="tableRoot" aria-label="simple table">
                         <TableHead>
                             <TableRow>
@@ -154,7 +162,7 @@ class TableViewComponent extends Component {
                     page={this.state.page}
                     onChangePage={this.handleChangePage}
                     onChangeRowsPerPage={this.handleChangeRowsPerPage}
-                    style={{backgroundColor: 'lightgrey', height: '18%'}}
+                    style={{ backgroundColor: 'lightgrey', height: '18%' }}
                 />
             </>
         )

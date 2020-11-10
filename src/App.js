@@ -23,6 +23,7 @@ import Badge from '@material-ui/core/Badge';
 import Container from '@material-ui/core/Container';
 import Paper from '@material-ui/core/Paper';
 import LinearProgress from '@material-ui/core/LinearProgress';
+import { withStyles, withTheme } from '@material-ui/core/styles';
 
 // menu
 import ListItem from '@material-ui/core/ListItem';
@@ -37,207 +38,249 @@ import PersonIcon from '@material-ui/icons/Person';
 import DashboardIcon from '@material-ui/icons/Dashboard';
 import TableChartIcon from '@material-ui/icons/TableChart';
 import EditIcon from '@material-ui/icons/Edit';
+import TextField from '@material-ui/core/TextField';
 
 import './App.css';
 
 const drawerWidth = 240;
 
-const useStyles = makeStyles((theme) => ({
-  root: {
-    display: 'flex',
-  },
-  toolbar: {
-    paddingRight: 24, // keep right padding when drawer closed
-  },
-  toolbarIcon: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    padding: '0 8px',
-    ...theme.mixins.toolbar,
-  },
-  appBar: {
-    zIndex: theme.zIndex.drawer + 1,
-    transition: theme.transitions.create(['width', 'margin'], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-  },
-  appBarShift: {
-    marginLeft: drawerWidth,
-    width: `calc(100% - ${drawerWidth}px)`,
-    transition: theme.transitions.create(['width', 'margin'], {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  },
-  menuButton: {
-    marginRight: 36,
-  },
-  menuButtonHidden: {
-    display: 'none',
-  },
-  title: {
-    flexGrow: 1,
-  },
-  drawerPaper: {
-    position: 'relative',
-    whiteSpace: 'nowrap',
-    width: drawerWidth,
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-  },
-  drawerPaperClose: {
-    overflowX: 'hidden',
-    transition: theme.transitions.create('width', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-    width: theme.spacing(7),
-    [theme.breakpoints.up('sm')]: {
-      width: theme.spacing(9),
+const styles = theme => ({
+    root: {
+        display: 'flex',
     },
-  },
-  appBarSpacer: theme.mixins.toolbar,
-  content: {
-    flexGrow: 1,
-    height: '100vh',
-    overflow: 'auto',
-  },
-  container: {
-    paddingTop: theme.spacing(4),
-    paddingBottom: theme.spacing(4),
-  },
-  paper: {
-    padding: theme.spacing(2),
-    display: 'flex',
-    overflow: 'auto',
-    flexDirection: 'column',
-  },
-}));
+    toolbar: {
+        paddingRight: 24, // keep right padding when drawer closed
+    },
+    toolbarIcon: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        padding: '0 8px',
+        ...theme.mixins.toolbar,
+    },
+    appBar: {
+        zIndex: theme.zIndex.drawer + 1,
+        transition: theme.transitions.create(['width', 'margin'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+        }),
+    },
+    appBarShift: {
+        marginLeft: drawerWidth,
+        width: `calc(100% - ${drawerWidth}px)`,
+        transition: theme.transitions.create(['width', 'margin'], {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.enteringScreen,
+        }),
+    },
+    menuButton: {
+        marginRight: 36,
+    },
+    menuButtonHidden: {
+        display: 'none',
+    },
+    title: {
+        flexGrow: 1,
+    },
+    drawerPaper: {
+        position: 'relative',
+        whiteSpace: 'nowrap',
+        width: drawerWidth,
+        transition: theme.transitions.create('width', {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.enteringScreen,
+        }),
+    },
+    drawerPaperClose: {
+        overflowX: 'hidden',
+        transition: theme.transitions.create('width', {
+            easing: theme.transitions.easing.sharp,
+            duration: theme.transitions.duration.leavingScreen,
+        }),
+        width: theme.spacing(7),
+        [theme.breakpoints.up('sm')]: {
+            width: theme.spacing(9),
+        },
+    },
+    appBarSpacer: theme.mixins.toolbar,
+    content: {
+        flexGrow: 1,
+        height: '100vh',
+        overflow: 'auto',
+    },
+    container: {
+        paddingTop: theme.spacing(4),
+        paddingBottom: theme.spacing(4),
+    },
+    paper: {
+        padding: theme.spacing(2),
+        display: 'flex',
+        overflow: 'auto',
+        flexDirection: 'column',
+    },
+    graphInput: {
+        color: 'white',
+    },
+});
 
-function App() {
-  const classes = useStyles();
-  const [open, setOpen] = useState(false);
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
-  const [tableViewToggled, setTableViewToggled] = useState(true);
-  const [AttributeEditorToggled, setAttributeEditorToggled] = useState(false);
 
-  function toggleTableView() {
-    setTableViewToggled(!tableViewToggled);
-  }
+class App extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {
+            drawerOpen: false,
+            tableViewToggled: true,
+            AttributeEditorToggled: false,
+            currentGraphId: 1,
+            selectedNodeId: 0
+        };
+        var updateCurrentGraph = this.updateCurrentGraph.bind(this);
+        var updateAttributeValue = this.updateAttributeValue.bind(this);
+    }
 
-  function toggleAttributeEditor() {
-    setAttributeEditorToggled(!AttributeEditorToggled);
-  }
+    toggleDrawer = () => {
+        this.setState({
+            drawerOpen: !this.state.drawerOpen
+        });
+    }
 
-  return (
-    <div className={classes.root}>
-      <LinearProgress />
-      <CssBaseline />
+    toggleTableView = () => {
+        this.setState({ tableViewToggled: !this.state.tableViewToggled });
+    }
 
-      <AppBar position="absolute" className={clsx(classes.appBar, open && classes.appBarShift)}>
-        <Toolbar className={classes.toolbar}>
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            className={clsx(classes.menuButton, open && classes.menuButtonHidden)}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
-            Web Constellation
+    toggleAttributeEditor = () => {
+        this.setState({ AttributeEditorToggled: !this.state.AttributeEditorToggled });
+    }
+
+    updateAttributeValue(newValue) {
+        this.setState({ selectedNodeId: newValue });
+    }
+
+    updateCurrentGraph = (newValue) => {
+        this.setState({ currentGraphId: newValue.target.value });
+    }
+
+    render() {
+        var updateAttributeValue = this.updateAttributeValue;
+        const { classes } = this.props;
+
+        return (
+
+            <div className={classes.root}>
+                <LinearProgress />
+                <CssBaseline />
+
+                <AppBar position="absolute" className={clsx(classes.appBar, this.state.drawerOpen && classes.appBarShift)// this.state.drawerOpen
+                }>
+                    <Toolbar className={classes.toolbar}>
+                        <IconButton
+                            edge="start"
+                            color="inherit"
+                            aria-label="open drawer"
+                            onClick={this.toggleDrawer}
+                            className={clsx(classes.menuButton, this.state.drawerOpen && classes.menuButtonHidden) /* this.state.drawerOpen */}
+                        >
+                            <MenuIcon />
+                        </IconButton>
+                        <Typography component="h1" variant="h6" color="inherit" noWrap className={classes.title}>
+                            Web Constellation
               </Typography>
-          <IconButton color="inherit">
-            <Badge badgeContent={4} color="secondary">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
-          <IconButton color="inherit">
-            <PersonIcon />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
+                        <TextField
+                            id="outlined-number"
+                            label="Graph #"
+                            type="number"
+                            InputLabelProps={{
+                                shrink: true,
+                                className: classes.graphInput,
+                            }}
+                            InputProps={{
+                                className: classes.graphInput,
+                            }}
+                            defaultValue={this.state.currentGraphId}
+                            onChange={this.updateCurrentGraph}
+                        />
+                        <IconButton color="inherit">
+                            <Badge badgeContent={4} color="secondary">
+                                <NotificationsIcon />
+                            </Badge>
+                        </IconButton>
+                        <IconButton color="inherit">
+                            <PersonIcon />
+                        </IconButton>
+                    </Toolbar>
+                </AppBar>
 
-      <Drawer
-        variant="permanent"
-        classes={{
-          paper: clsx(classes.drawerPaper, !open && classes.drawerPaperClose),
-        }}
-        open={open}
-      >
-        <div className={classes.toolbarIcon}>
-          <IconButton onClick={handleDrawerClose}>
-            <ChevronLeftIcon />
-          </IconButton>
-        </div>
-        <Divider />
-        <List>
-          <ListItem button>
-            <ListItemIcon>
-              <DashboardIcon />
-            </ListItemIcon>
-            <ListItemText primary="Dashboard" />
-          </ListItem>
-          <ListItem button>
-            <ListItemIcon>
-              <EditIcon onClick={toggleAttributeEditor} />
-            </ListItemIcon>
-            <ListItemText primary="Attribute Editor" />
-          </ListItem>
-          <ListItem button>
-            <ListItemIcon>
-              <TableChartIcon onClick={toggleTableView} />
-            </ListItemIcon>
-            <ListItemText primary="Table View" />
-          </ListItem>
-        </List>
-      </Drawer>
+                <Drawer
+                    variant="permanent"
+                    classes={{
+                        paper: clsx(classes.drawerPaper, !this.state.drawerOpen && classes.drawerPaperClose), // !this.state.drawerOpen
+                    }}
+                    open={this.state.drawerOpen}
+                >
+                    <div className={classes.toolbarIcon}>
+                        <IconButton onClick={this.toggleDrawer}>
+                            <ChevronLeftIcon />
+                        </IconButton>
+                    </div>
+                    <Divider />
+                    <List>
+                        <ListItem button>
+                            <ListItemIcon>
+                                <DashboardIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Dashboard" />
+                        </ListItem>
+                        <ListItem button>
+                            <ListItemIcon>
+                                <EditIcon onClick={this.toggleAttributeEditor} />
+                            </ListItemIcon>
+                            <ListItemText primary="Attribute Editor" />
+                        </ListItem>
+                        <ListItem button>
+                            <ListItemIcon>
+                                <TableChartIcon onClick={this.toggleTableView} />
+                            </ListItemIcon>
+                            <ListItemText primary="Table View" />
+                        </ListItem>
+                    </List>
+                </Drawer>
 
-      <main className={classes.content}>
-        <div className={classes.appBarSpacer} />
-        <Container maxWidth="false" className={classes.container}>
-          <Grid container spacing={3}>
-            {/* Side View */}
-            {AttributeEditorToggled &&
-              <Grid item xs={AttributeEditorToggled ? 4 : 12}>
-                <Paper className={classes.paper}>
-                  <h3>Attribute Editor</h3>
-                  <AttributeEditor />
-                </Paper>
-              </Grid>
-            }
+                <main className={classes.content}>
+                    <div className={classes.appBarSpacer} />
+                    <Container maxWidth={false} className={classes.container}>
+                        <Grid container spacing={3}>
+                            {/* Side View */}
+                            {this.state.AttributeEditorToggled &&
+                                <Grid item xs={this.state.AttributeEditorToggled ? 4 : 12}>
+                                    <Paper className={classes.paper}>
+                                        <h3>Attribute Editor</h3>
+                                        <AttributeEditor selectedNode={this.state.selectedNodeId} graphId={this.state.currentGraphId} />
+                                    </Paper>
+                                </Grid>
+                            }
 
-            {/* Graph */}
-            <Grid item xs={AttributeEditorToggled ? 8 : 12}>
-              <Paper className={classes.paper}>
-                <GraphComponent />
-              </Paper>
-            </Grid>
+                            {/* Graph */}
+                            <Grid item xs={this.state.AttributeEditorToggled ? 8 : 12}>
+                                <Paper className={classes.paper}>
+                                    <GraphComponent handleToUpdate={updateAttributeValue.bind(this)} graphId={this.state.currentGraphId} />
+                                </Paper>
+                            </Grid>
 
-            {/* Bottom View*/}
-            {tableViewToggled &&
-              <Grid item xs={12}>
-                <Paper className={classes.paper}>
-                  <h3>Table View</h3>
-                  <TableViewComponent />
-                </Paper>
-              </Grid>
-            }
-          </Grid>
-        </Container>
-      </main>
-    </div>
-  );
+                            {/* Bottom View*/}
+                            {this.state.tableViewToggled &&
+                                <Grid item xs={12}>
+                                    <Paper className={classes.paper}>
+                                        <h3>Table View</h3>
+                                        <TableViewComponent graphId={this.state.currentGraphId} />
+                                    </Paper>
+                                </Grid>
+                            }
+                        </Grid>
+                    </Container>
+                </main>
+            </div>
+        )
+    }
 }
 
-export default App;
+export default withStyles(styles)(App)

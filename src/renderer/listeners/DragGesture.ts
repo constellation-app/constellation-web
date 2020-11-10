@@ -16,7 +16,7 @@ export class DragGesture {
 
     private readonly nodeCurrentWorldPosition = Matrix.createVector();
     private readonly vertexChangCallback: any;
-    
+
     constructor(nodeHoverSelector: NodeHoverSelector, callback: (pos: number, x: number, y: number, z: number) => void) {
         this.nodeHoverSelector = nodeHoverSelector;
         this.vertexChangCallback = callback;
@@ -88,7 +88,7 @@ export class DragGesture {
     handleMouseUp = (event: MouseEvent): void => {
         if (event.button === 0) {
             if (this.hoverNodeId !== null) {
-                console.log("DEBUG: DRAG is completed for: " + this.hoverNodeId + ', x=' + this.nodeHoverSelector.nodePositions[this.hoverNodeId * 4]);
+                //console.log("DEBUG: DRAG is completed for: " + this.hoverNodeId + ', x=' + this.nodeHoverSelector.nodePositions[this.hoverNodeId * 4]);
                 this.vertexChangCallback(this.hoverNodeId, this.nodeCurrentWorldPosition[0], this.nodeCurrentWorldPosition[1], this.nodeCurrentWorldPosition[2]);
             }
             this.hoverNodeId = null;

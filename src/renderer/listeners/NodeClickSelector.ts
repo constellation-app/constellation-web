@@ -11,8 +11,10 @@ export class NodeClickSelector {
     readonly nodePositions: Float32Array;
     readonly nodeVisuals: Uint32Array;
     readonly closest: boolean;
+    readonly component: any;
 
-    constructor(canvas: HTMLCanvasElement, camera: Camera, graphRenderer: GraphRenderer, nodePositions: Float32Array, nodeVisuals: Uint32Array, closest: boolean = false) {
+    constructor(component: any, canvas: HTMLCanvasElement, camera: Camera, graphRenderer: GraphRenderer, nodePositions: Float32Array, nodeVisuals: Uint32Array, closest: boolean = false) {
+        this.component = component;
         this.canvas = canvas;
         this.camera = camera;
         this.graphRenderer = graphRenderer;
@@ -24,12 +26,13 @@ export class NodeClickSelector {
     }
 
     mouseClickHandler = (event: MouseEvent): void => {
-      const selectedId = this.closest
+        const selectedId = this.closest
             ? Selector.selectClosestNode(event.clientX, event.clientY, this.camera, this.nodePositions, this.nodePositions.length / 4)
             : Selector.selectNode(event.clientX, event.clientY, this.camera, this.nodePositions, this.nodePositions.length / 4);
-      if (selectedId) {
-        BufferBuilder.selectNode(selectedId, this.nodeVisuals);
-        this.graphRenderer.updateNodeVisuals(this.nodeVisuals, selectedId, selectedId + 1);
-      }
+        if (selectedId) {
+            this.component.selectedNode(selectedId);
+            BufferBuilder.selectNode(selectedId, this.nodeVisuals);
+            this.graphRenderer.updateNodeVisuals(this.nodeVisuals, selectedId, selectedId + 1);
+        }
     }
 }
