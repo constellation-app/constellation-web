@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     'app.apps.AppConfig',
-    'silk',
+    # 'silk',
     'django_extensions',
     'channels',
     'websockets',
@@ -64,7 +64,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'silk.middleware.SilkyMiddleware',
+    # 'silk.middleware.SilkyMiddleware',
 ]
 
 CORS_ALLOWED_ORIGINS = [

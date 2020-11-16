@@ -103,8 +103,8 @@ urlpatterns = [
     # copied out onto the file system and used as an input to the endpoint.
     path('import/', views.ImportLegacyJSON, name='import_json'),
 
-    # Added endpoint for developmental performance tuning
-    url(r'^silk/', include('silk.urls', namespace='silk')),
+    # # Added endpoint for developmental performance tuning
+    # url(r'^silk/', include('silk.urls', namespace='silk')),
     # </editor-fold>
 
     # path('admin/', admin.site.urls),
