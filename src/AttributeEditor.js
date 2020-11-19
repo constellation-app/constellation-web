@@ -36,6 +36,7 @@ class AttributeEditor extends Component {
         super(props)
         this.state = {
             currentGraphId: this.props.graphId,
+            currentVxId: 0,
             Vxrows: [],
             Txrows: [],
             Graphrows: [],
@@ -75,6 +76,7 @@ class AttributeEditor extends Component {
                         VxDatarows: vertexAttributes[1]['data'][this.props.selectedNode],
                         TxDatarows: transactionAttributes[1]['data'][this.props.selectedNode],
                         GraphDatarows: graphAttributes[1]['data'][0],
+                        currentVxId: vertexAttributes[1]['data'][this.props.selectedNode]['vx_id_']
                     });
                 }
             });
@@ -106,10 +108,11 @@ class AttributeEditor extends Component {
 
         if (this.state.element === "VERTEX") {
             requestUrl = 'http://' + host + '/edit_vertex_attribs/';
-            data = { 'graph_id': this.state.currentGraphId, 'vx_id': this.props.selectedNode, [attributeLabel]: attributeValue }; // current element id
+            data = { 'graph_id': this.state.currentGraphId, 'vx_id': this.state.currentVxId, [attributeLabel]: attributeValue }; // current element id
         } else if (this.state.element === "TRANSACTION") {
+            // TODO: This is wrong at the moment, nbeed to set transaction ID
             requestUrl = 'http://' + host + '/edit_transaction_attribs/';
-            data = { 'graph_id': this.state.currentGraphId, 'tx_id': this.props.selectedNode, [attributeLabel]: attributeValue }; // current element id
+            data = { 'graph_id': this.state.currentGraphId, 'tx_id': this.state.currentVxId, [attributeLabel]: attributeValue }; // current element id
         } else if (this.state.element === "GRAPH") {
             requestUrl = 'http://' + host + '/edit_graph_attribs/';
             data = { 'graph_id': this.state.currentGraphId, [attributeLabel]: attributeValue };

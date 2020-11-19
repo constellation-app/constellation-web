@@ -116,7 +116,6 @@ class GraphComponent extends Component {
 
             const message = JSON.parse(evt.data)
             const response = JSON.parse(message["message"])
-            console.log("response: " + evt.data);
 
             if (response["graph_id"] === this.state.currentGraphId) {
                 if (response["operation"] === "CREATE") {
