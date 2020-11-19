@@ -12,7 +12,8 @@ export class NodeHoverSelector {
     readonly nodeVisuals: Uint32Array;
     readonly closest: boolean;
 
-    private hoverNodeId: number | null = null;
+    // Index into nodePositions array that is being hovered over
+    private hoverNodeIndex: number | null = null;
 
     constructor(canvas: HTMLCanvasElement, camera: Camera, graphRenderer: GraphRenderer, nodePositions: Float32Array, nodeVisuals: Uint32Array, closest: boolean = false) {
         this.canvas = canvas;
@@ -26,7 +27,7 @@ export class NodeHoverSelector {
     }
 
     getHoverNode = (): number | null => {
-        return this.hoverNodeId;
+        return this.hoverNodeIndex;
     }
 
     mouseMoveHandler = (event: MouseEvent): void => {
@@ -35,21 +36,20 @@ export class NodeHoverSelector {
     }
 
     update = (x: number, y: number): void => {
-        const newHoverNodeId = this.closest
+        const newHoverNodeIndex = this.closest
             ? Selector.selectClosestNode(x, y, this.camera, this.nodePositions, this.nodePositions.length / 4)
             : Selector.selectNode(x, y, this.camera, this.nodePositions, this.nodePositions.length / 4);
 
-        if (newHoverNodeId !== this.hoverNodeId) {
-
-            if (this.hoverNodeId !== null) {
-                GraphRendererUtilities.deselectNode(this.graphRenderer, this.nodeVisuals, this.hoverNodeId);
+        if (newHoverNodeIndex !== this.hoverNodeIndex) {
+            if (this.hoverNodeIndex !== null) {
+                GraphRendererUtilities.deselectNode(this.graphRenderer, this.nodeVisuals, this.hoverNodeIndex);
             }
 
-            if (newHoverNodeId !== null) {
-                GraphRendererUtilities.selectNode(this.graphRenderer, this.nodeVisuals, newHoverNodeId);
+            if (newHoverNodeIndex !== null) {
+                GraphRendererUtilities.selectNode(this.graphRenderer, this.nodeVisuals, newHoverNodeIndex);
             }
 
-            this.hoverNodeId = newHoverNodeId;
+            this.hoverNodeIndex = newHoverNodeIndex;
         }
     }
 }

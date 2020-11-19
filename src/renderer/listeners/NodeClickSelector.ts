@@ -26,13 +26,19 @@ export class NodeClickSelector {
     }
 
     mouseClickHandler = (event: MouseEvent): void => {
-        const selectedId = this.closest
-            ? Selector.selectClosestNode(event.clientX, event.clientY, this.camera, this.nodePositions, this.nodePositions.length / 4)
-            : Selector.selectNode(event.clientX, event.clientY, this.camera, this.nodePositions, this.nodePositions.length / 4);
-        if (selectedId) {
-            this.component.selectedNode(selectedId);
-            BufferBuilder.selectNode(selectedId, this.nodeVisuals);
-            this.graphRenderer.updateNodeVisuals(this.nodeVisuals, selectedId, selectedId + 1);
+        var canvasBounds = this.canvas.getBoundingClientRect();
+        this.update(event.clientX - canvasBounds.left, event.clientY - canvasBounds.top);
+    }
+
+    update = (x: number, y: number): void => {
+        const selectedNodeIndex = this.closest
+            ? Selector.selectClosestNode(x, y, this.camera, this.nodePositions, this.nodePositions.length / 4)
+            : Selector.selectNode(x, y, this.camera, this.nodePositions, this.nodePositions.length / 4);
+
+        if (selectedNodeIndex) {
+            this.component.selectedNode(selectedNodeIndex);
+            BufferBuilder.selectNode(selectedNodeIndex, this.nodeVisuals);
+            this.graphRenderer.updateNodeVisuals(this.nodeVisuals, selectedNodeIndex, selectedNodeIndex + 1);
         }
     }
 }

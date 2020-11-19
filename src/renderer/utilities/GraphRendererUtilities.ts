@@ -41,11 +41,11 @@ export class GraphRendererUtilities {
      * 
      * @param graphRenderer - the graph renderer that is rendering the node.
      * @param nodeVisuals - the node visuals buffer storing the visuals of the nodes.
-     * @param id - the id of the node to update.
+     * @param index - the index into the nodeVisuals array of the node to update.
      */
-    static selectNode = (graphRenderer: GraphRenderer, nodeVisuals: Uint32Array, id: number): void => {
-        BufferBuilder.selectNode(id, nodeVisuals);
-        graphRenderer.updateNodeVisuals(nodeVisuals, id, id + 1);
+    static selectNode = (graphRenderer: GraphRenderer, nodeVisuals: Uint32Array, index: number): void => {
+        BufferBuilder.selectNode(index, nodeVisuals);
+        graphRenderer.updateNodeVisuals(nodeVisuals, index, index + 1);
     }
 
     /**
@@ -53,10 +53,10 @@ export class GraphRendererUtilities {
      * 
      * @param graphRenderer - the graph renderer that is rendering the node.
      * @param nodeVisuals - the node visuals buffer storing the visuals of the nodes.
-     * @param id - the id of the node to update.
+     * @param index - the index into the nodeVisuals array of the node to update.
      */
-    static deselectNode = (graphRenderer: GraphRenderer, nodeVisuals: Uint32Array, id: number): void => {
-        BufferBuilder.deselectNode(id, nodeVisuals);
-        graphRenderer.updateNodeVisuals(nodeVisuals, id, id + 1);
+    static deselectNode = (graphRenderer: GraphRenderer, nodeVisuals: Uint32Array, index: number): void => {
+        BufferBuilder.deselectNode(index, nodeVisuals);
+        graphRenderer.updateNodeVisuals(nodeVisuals, index, index + 1);
     }
 }
