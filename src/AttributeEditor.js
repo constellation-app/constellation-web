@@ -198,9 +198,6 @@ class AttributeEditor extends Component {
         if (prevProps.graphId !== this.props.graphId) {
             this.updateGraphId(this.props.graphId);
         }
-
-        // TODO: Possibly dont need to refresh every time the props change
-        this.refreshAttributes();
     }
 
     render() {

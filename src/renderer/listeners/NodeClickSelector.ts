@@ -35,7 +35,7 @@ export class NodeClickSelector {
             ? Selector.selectClosestNode(x, y, this.camera, this.nodePositions, this.nodePositions.length / 4)
             : Selector.selectNode(x, y, this.camera, this.nodePositions, this.nodePositions.length / 4);
 
-        if (selectedNodeIndex) {
+        if (selectedNodeIndex != null) {
             this.component.selectedNode(selectedNodeIndex);
             BufferBuilder.selectNode(selectedNodeIndex, this.nodeVisuals);
             this.graphRenderer.updateNodeVisuals(this.nodeVisuals, selectedNodeIndex, selectedNodeIndex + 1);
