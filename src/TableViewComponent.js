@@ -27,6 +27,7 @@ class TableViewComponent extends Component {
         };
         this.updateGraphId = this.updateGraphId.bind(this);
         this.addWebSocket();
+        this.refreshTable();
     }
 
     // update the current displayed graph value by setting the state.
@@ -108,8 +109,6 @@ class TableViewComponent extends Component {
         if (prevProps.graphId !== this.props.graphId) {
             this.updateGraphId(this.props.graphId);
         }
-        // TODO: Possibly dont need to refresh every time the props change
-        this.refreshTable();
     }
 
     refreshTable() {
