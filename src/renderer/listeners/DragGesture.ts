@@ -27,6 +27,31 @@ export class DragGesture {
         nodeHoverSelector.canvas.addEventListener('mouseout', this.handleMouseUp);
     }
 
+    processMouseUpdate = (mouseX: number, mouseY: number): void => {
+
+        // If a drag operation is currently underway...
+        if (this.hoverNodeId !== null) {
+
+            // Find the point where the mouse cursor would intersect with the plane at the same depth as the hover node.
+            this.nodeHoverSelector.camera.updatePixelVector(mouseX, mouseY, this.mouseCurrentLocalPosition);
+            Matrix.scale(this.mouseCurrentLocalPosition, this.nodeStartingLocalPosition[2] / this.mouseCurrentLocalPosition[2], this.mouseCurrentLocalPosition);
+
+            // Find the new hover node position by adding the new mouse position and subtracting the starting mouse position from the nodes starting position.
+            Matrix.copyVector(this.nodeStartingLocalPosition, this.nodeCurrentLocalPosition);
+            Matrix.add(this.nodeCurrentLocalPosition, this.mouseCurrentLocalPosition, this.nodeCurrentLocalPosition);
+            Matrix.subtract(this.nodeCurrentLocalPosition, this.mouseStartingLocalPosition, this.nodeCurrentLocalPosition);
+
+            // Map the new hover node position back into world space.
+            Matrix.local2WorldPoint(this.nodeCurrentLocalPosition, 0, this.nodeHoverSelector.camera.viewMatrix, this.nodeCurrentWorldPosition);
+
+            // Update the position of the hover node in the graph renderer.
+            GraphRendererUtilities.updateNodePosition(this.nodeHoverSelector.graphRenderer, this.nodeHoverSelector.nodePositions, this.hoverNodeId, this.nodeCurrentWorldPosition[0],
+                this.nodeCurrentWorldPosition[1],
+                this.nodeCurrentWorldPosition[2],
+                BufferBuilder.getNodeRadius(this.hoverNodeId, this.nodeHoverSelector.nodePositions));
+        }
+    }
+
     handleMouseDown = (event: MouseEvent): void => {
         if (event.button === 0) {
 
@@ -40,8 +65,6 @@ export class DragGesture {
 
             if (this.hoverNodeId !== null) {
 
-                console.log("DEBUG: DRAG started for: " + this.hoverNodeId + ', x=' + this.nodeHoverSelector.nodePositions[this.hoverNodeId * 4]);
-
                 // Find the position of the hover node in local camera coordinates.
                 Matrix.world2LocalPoint(this.nodeHoverSelector.nodePositions, this.hoverNodeId * 4, this.nodeHoverSelector.camera.viewMatrix, this.nodeStartingLocalPosition);
 
@@ -50,45 +73,28 @@ export class DragGesture {
 
                 // Project the mouse vector out to intersect with the plane at the same depth as the hover node.
                 Matrix.scale(this.mouseStartingLocalPosition, this.nodeStartingLocalPosition[2] / this.mouseStartingLocalPosition[2], this.mouseStartingLocalPosition);
+
+                // Set initial position of selected vertex
+                this.processMouseUpdate(mouseX, mouseY);
             }
         }
     }
 
     handleMouseMove = (event: MouseEvent): void => {
-        if (event.button === 0) {
+        if ((event.button === 0) && (this.hoverNodeId !== null))  {
             // Adjust the mouse position to account for the position of the canvas in the window.
             const canvasBounds = this.nodeHoverSelector.canvas.getBoundingClientRect();
             const mouseX = event.clientX - canvasBounds.left;
             const mouseY = event.clientY - canvasBounds.top;
 
-            // If a drag operation is currently underway...
-            if (this.hoverNodeId !== null) {
-
-                // Find the point where the mouse cursor would intersect with the plane at the same depth as the hover node.
-                this.nodeHoverSelector.camera.updatePixelVector(mouseX, mouseY, this.mouseCurrentLocalPosition);
-                Matrix.scale(this.mouseCurrentLocalPosition, this.nodeStartingLocalPosition[2] / this.mouseCurrentLocalPosition[2], this.mouseCurrentLocalPosition);
-
-                // Find the new hover node position by adding the new mouse position and subtracting the starting mouse position from the nodes starting position.
-                Matrix.copyVector(this.nodeStartingLocalPosition, this.nodeCurrentLocalPosition);
-                Matrix.add(this.nodeCurrentLocalPosition, this.mouseCurrentLocalPosition, this.nodeCurrentLocalPosition);
-                Matrix.subtract(this.nodeCurrentLocalPosition, this.mouseStartingLocalPosition, this.nodeCurrentLocalPosition);
-
-                // Map the new hover node position back into world space.
-                Matrix.local2WorldPoint(this.nodeCurrentLocalPosition, 0, this.nodeHoverSelector.camera.viewMatrix, this.nodeCurrentWorldPosition);
-
-                // Update the position of the hover node in the graph renderer.
-                GraphRendererUtilities.updateNodePosition(this.nodeHoverSelector.graphRenderer, this.nodeHoverSelector.nodePositions, this.hoverNodeId, this.nodeCurrentWorldPosition[0],
-                    this.nodeCurrentWorldPosition[1],
-                    this.nodeCurrentWorldPosition[2],
-                    BufferBuilder.getNodeRadius(this.hoverNodeId, this.nodeHoverSelector.nodePositions));
-            }
+            // Update position of selected vertex
+            this.processMouseUpdate(mouseX, mouseY);
         }
     }
 
     handleMouseUp = (event: MouseEvent): void => {
         if (event.button === 0) {
             if (this.hoverNodeId !== null) {
-                //console.log("DEBUG: DRAG is completed for: " + this.hoverNodeId + ', x=' + this.nodeHoverSelector.nodePositions[this.hoverNodeId * 4]);
                 this.vertexChangCallback(this.hoverNodeId, this.nodeCurrentWorldPosition[0], this.nodeCurrentWorldPosition[1], this.nodeCurrentWorldPosition[2]);
             }
             this.hoverNodeId = null;
