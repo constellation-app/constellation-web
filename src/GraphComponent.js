@@ -27,10 +27,12 @@ class GraphComponent extends Component {
     websocket_endpoint = 'ws://' + host + '/ws/updates/'
     nodePositions = [];
     nodeVisuals = [];
+    labels = [];
     vxIDToPosMap = Map;
     txIDToPosMap = Map;
     posToVxIDMap = Map;
     posToTxIDMap = Map;
+    icon_manager = new IconManager();
 
     canvasRef = React.createRef();
 
@@ -69,8 +71,33 @@ class GraphComponent extends Component {
             })
             .then((response) => {
                 const node = response["json"];
-                BufferBuilder.updateNodePosition(this.vxIDToPosMap.get(response.vx_id), node["x"], node["y"], node["z"], 1, this.nodePositions);
-                this.graphRenderer.setNodes(this.nodePositions, this.nodeVisuals);
+                const nodePos = this.vxIDToPosMap.get(response.vx_id);
+                const icon = this.icon_manager.getIconIndex(node['icon']);
+                const backgroundIcon = this.icon_manager.getIconIndex(node['background_icon']);
+                const color = ConstellationGraphLoader.loadColor(node['color']);
+
+                BufferBuilder.updateNodePosition(nodePos, node["x"], node["y"], node["z"], 1, this.nodePositions);
+                BufferBuilder.updateNodeVisuals(nodePos, icon, backgroundIcon, color, (this.selectedNode == nodePos), this.nodeVisuals);
+
+                // TODO: is there a more efficient way to do this - probably need glyph renderer to have a method
+                // TODO: to update  existing rather than just appending new
+                if (node["Label"] != this.labels[nodePos]) {
+                    this.labels[nodePos] = node["Label"];
+                    var glyphRenderer = new GlyphRenderer(36, 'NotoSansSC-Black.otf', 2, (error) => {
+                        this.graphRenderer.setGlyphRenderer(glyphRenderer);
+
+                        const glyphs = [];
+                        for (var i = 0; i < this.nodePositions.length / 4; i++) {
+                            if (this.labels[i]) {
+                                glyphRenderer.renderText(i,0, this.labels[i], glyphs);
+                            }
+                        }
+                        this.graphRenderer.setGlyphSize(3);
+                        this.graphRenderer.setGlyphs(new Float32Array(glyphs));
+                        this.graphRenderer.setGlyphColor(new Float32Array([1, 1, 0]));
+                    });
+                }
+
             })
             .catch((error) => {
                 console.log('TODO GraphView: invalid Vertex:' + vertex_id);
@@ -131,15 +158,15 @@ class GraphComponent extends Component {
         this.addWebSocket();
         var controller = new CanvasController(this.canvasRef.current);
         var gl = controller.gl;
-        var icon_manager = new IconManager();
 
-        ConstellationGraphLoader.load('http://' + host + "/graphs/" + this.state.currentGraphId + "/json", icon_manager,
+        ConstellationGraphLoader.load('http://' + host + "/graphs/" + this.state.currentGraphId + "/json", this.icon_manager,
             (np, nv, labels, lp, vxIdPosMap, txIdPosMap) => {
-                this.graphRenderer = new GraphRenderer(gl, icon_manager.getIconMap());
+                this.graphRenderer = new GraphRenderer(gl, this.icon_manager.getIconMap());
 
                 //TODO: Need wider access to nodes to allow them to be 'updated, I think we also need copy of the JSON so we can 'insert' new bits into it.
                 this.nodePositions = np;
                 this.nodeVisuals = nv;
+                this.labels = labels;
                 this.vxIDToPosMap = vxIdPosMap;
                 this.txIDToPosMap = txIdPosMap;
 
@@ -167,8 +194,8 @@ class GraphComponent extends Component {
 
                     const glyphs = [];
                     for (var i = 0; i < this.nodePositions.length / 4; i++) {
-                        if (labels[i]) {
-                            glyphRenderer.renderText(i, 0, labels[i], glyphs);
+                        if (this.labels[i]) {
+                            glyphRenderer.renderText(i, 0, this.labels[i], glyphs);
                         }
                     }
                     this.graphRenderer.setGlyphSize(3);
