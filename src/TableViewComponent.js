@@ -21,6 +21,8 @@ class TableViewComponent extends Component {
         super(props)
         this.state = {
             currentGraphId: this.props.graphId,
+            currentVxId: 0,
+            currentTxId: 0,
             page: 0,
             rowsPerPage: 10,
             rows: []
@@ -42,6 +44,11 @@ class TableViewComponent extends Component {
         })
     }
 
+    // Returns true if the supplied vertex id matches the currently selected one.
+    is_selected(vxid) {
+        return (vxid == this.state.currentVxId);
+    }
+
     // Load a vertex into the buffer using a fetch request.
     loadVertex(vertex_id) {
         fetch('http://' + host + '/vertexes/' + vertex_id)
@@ -58,7 +65,10 @@ class TableViewComponent extends Component {
                 const pos = this.vxIDToPosMap.get(vx_id);
                 var vertexes = this.state.rows;
                 vertexes[pos] = node;
-                this.setState({ rows: vertexes });
+                this.setState({
+                    rows: vertexes,
+                    currentVxId: vertexes[this.props.selectedNode]['vx_id_']
+                });
 
             })
             .catch((error) => {
@@ -120,6 +130,7 @@ class TableViewComponent extends Component {
                     const vx_id = vertexes[index]["vx_id_"];
                     this.vxIDToPosMap.set(vx_id, index);
                 }
+
             });
     }
 
@@ -140,7 +151,7 @@ class TableViewComponent extends Component {
                         <TableBody>
                             {this.state.rows.slice(this.state.page * this.state.rowsPerPage, this.state.page * this.state.rowsPerPage + this.state.rowsPerPage)
                                 .map((row) => (
-                                    <TableRow key={row.vx_id_}>
+                                    <TableRow key={row.vx_id_} selected={this.is_selected(row.vx_id_)}>
                                         <TableCell style={{ fontSize: '8pt', padding: '5px' }} component="th" scope="row">
                                             {row.vx_id_}
                                         </TableCell>

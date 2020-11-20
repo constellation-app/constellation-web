@@ -271,7 +271,7 @@ class App extends React.Component {
                                 <Grid item xs={12} style={{ padding: '0px 6px 6px 6px' }}>
                                     <Paper className={classes.paper}>
                                         <h3 style={{ margin: '0px' }}>Table View</h3>
-                                        <TableViewComponent graphId={this.state.currentGraphId} />
+                                        <TableViewComponent selectedNode={this.state.selectedNodeId} graphId={this.state.currentGraphId} />
                                     </Paper>
                                 </Grid>
                             }
