@@ -126,28 +126,28 @@ class TableViewComponent extends Component {
     render() {
         return (
             <>
-                <TableContainer style={{ maxHeight: '100%', height: '82%' }}>
+                <TableContainer style={{ maxHeight: '100%', height: '90%' }}>
                     <Table stickyHeader className="tableRoot" aria-label="simple table">
                         <TableHead>
                             <TableRow>
-                                <TableCell className="cell">vx_id</TableCell>
-                                <TableCell className="cell" align="right">x</TableCell>
-                                <TableCell className="cell" align="right">y</TableCell>
-                                <TableCell className="cell" align="right">z</TableCell>
-                                <TableCell className="cell" align="right">Label</TableCell>
+                                <TableCell style={{ fontSize: '8pt', padding: '5px' }} className="cell">vx_id</TableCell>
+                                <TableCell style={{ fontSize: '8pt', padding: '5px' }} className="cell" align="right">x</TableCell>
+                                <TableCell style={{ fontSize: '8pt', padding: '5px' }} className="cell" align="right">y</TableCell>
+                                <TableCell style={{ fontSize: '8pt', padding: '5px' }} className="cell" align="right">z</TableCell>
+                                <TableCell style={{ fontSize: '8pt', padding: '5px' }} className="cell" align="right">Label</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {this.state.rows.slice(this.state.page * this.state.rowsPerPage, this.state.page * this.state.rowsPerPage + this.state.rowsPerPage)
                                 .map((row) => (
                                     <TableRow key={row.vx_id_}>
-                                        <TableCell component="th" scope="row">
+                                        <TableCell style={{ fontSize: '8pt', padding: '5px' }} component="th" scope="row">
                                             {row.vx_id_}
                                         </TableCell>
-                                        <TableCell align="right">{row.x}</TableCell>
-                                        <TableCell align="right">{row.y}</TableCell>
-                                        <TableCell align="right">{row.z}</TableCell>
-                                        <TableCell align="right">{row.Label}</TableCell>
+                                        <TableCell style={{ fontSize: '8pt', padding: '5px' }} align="right">{row.x}</TableCell>
+                                        <TableCell style={{ fontSize: '8pt', padding: '5px' }} align="right">{row.y}</TableCell>
+                                        <TableCell style={{ fontSize: '8pt', padding: '5px' }} align="right">{row.z}</TableCell>
+                                        <TableCell style={{ fontSize: '8pt', padding: '5px' }} align="right">{row.Label}</TableCell>
                                     </TableRow>
                                 ))}
                         </TableBody>
@@ -161,7 +161,7 @@ class TableViewComponent extends Component {
                     page={this.state.page}
                     onChangePage={this.handleChangePage}
                     onChangeRowsPerPage={this.handleChangeRowsPerPage}
-                    style={{ backgroundColor: 'lightgrey', height: '18%' }}
+                    style={{ backgroundColor: 'lightgrey' }}
                 />
             </>
         )
