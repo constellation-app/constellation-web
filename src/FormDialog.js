@@ -29,11 +29,11 @@ export default function FormDialog(props) {
 
     return (
         <div>
-            <Button variant="outlined" color="primary" onClick={handleClickOpen}>
+            <Button style={{ backgroundColor: '#e7e7e7', fontSize: '8pt', padding: '0px' }} variant="outlined" color="primary" onClick={handleClickOpen}>
                 Edit
       </Button>
             <Dialog open={open} onClose={handleClose} aria-labelledby="form-dialog-title">
-                <DialogTitle id="form-dialog-title">Edit Value</DialogTitle>
+                <DialogTitle variant="body2" id="form-dialog-title">Edit Attribute: {props.label}</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
                         Please enter a new value to submit.
@@ -46,14 +46,15 @@ export default function FormDialog(props) {
                         label="Value"
                         type="text"
                         fullWidth
+                        defaultValue={props.current}
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleClose} color="primary">
+                    <Button style={{ backgroundColor: '#e7e7e7', fontSize: '8pt', padding: '0px' }} variant="outlined" color="primary" onClick={handleClose}>
                         Cancel
           </Button>
-                    <Button onClick={() => handleToUpdate(value)} color="primary">
-                        Save Edit
+                    <Button style={{ backgroundColor: '#e7e7e7', fontSize: '8pt', padding: '0px' }} variant="outlined" color="primary" onClick={() => {handleToUpdate(value); setOpen(false);}}>
+                        Save
           </Button>
 
                 </DialogActions>

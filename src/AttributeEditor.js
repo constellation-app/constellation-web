@@ -7,6 +7,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import { ConstellationAttributeLoader } from './ConstellationAttributeLoader';
 import FormDialog from './FormDialog';
+import Typography from '@material-ui/core/Typography';
 
 // menu
 import ListItem from '@material-ui/core/ListItem';
@@ -37,6 +38,7 @@ class AttributeEditor extends Component {
         this.state = {
             currentGraphId: this.props.graphId,
             currentVxId: 0,
+            currentTxId: 0,
             Vxrows: [],
             Txrows: [],
             Graphrows: [],
@@ -209,12 +211,15 @@ class AttributeEditor extends Component {
         return (
             <>
                 {(this.state.previousSelected !== this.props.selectedNode) && this.updateSelection()}
-                <List>
-                    <ListItem button onClick={this.toggleGraphAttributes} selected={this.state.graphAttributeOpened}>
+                <List style={{ padding: '0px' }}>
+                    <ListItem style={{ padding: '0px' }} button onClick={this.toggleGraphAttributes} selected={this.state.graphAttributeOpened}>
                         <ListItemIcon>
                             <EditIcon />
                         </ListItemIcon>
-                        <ListItemText primary="Graph Attributes" />
+                        <ListItemText
+                            primary={<Typography variant="body2" >Graph ({this.state.Graphrows.length} attributes)</Typography>}
+                            secondary={`ID: ${this.props.graphId}`}
+                        />
                     </ListItem>
                 </List>
                 {
@@ -224,33 +229,35 @@ class AttributeEditor extends Component {
                         <Table stickyHeader className="tableRoot" aria-label="simple table">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell"><b>Graph Attributes</b></TableCell>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell" align="right"><b>Type</b></TableCell>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell" align="right"><b>Description</b></TableCell>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell" align="left"><b>Value</b></TableCell>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell" align="center"><b>Edit</b></TableCell>
+                                    <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} className="cell" align="left"><b>Attribute</b></TableCell>
+                                    <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} className="cell" align="left"><b>Value</b></TableCell>
+                                    <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} className="cell" align="right"></TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {this.state.Graphrows.slice().map((row, index) => (
 
-                                    <TableRow key={row.label}>
-                                        <TableCell style={{ fontSize: '8pt' }} component="th" scope="row">{row.label}</TableCell>
-                                        <TableCell style={{ fontSize: '8pt' }} align="right">{row.type}</TableCell>
-                                        <TableCell style={{ fontSize: '8pt' }} align="right">{row.descr}</TableCell>
-
-                                        <TableCell style={{ fontSize: '8pt' }} align="left">
+                                    <TableRow key={row.label} title={`Attribute: ${row.label} [${row.type}]
+Description: ${row.descr}`}>
+                                        <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} component="th" scope="row" align="left">{row.label}</TableCell>
+                                        <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} align="left">
                                             {
                                                 // this block of code will not print out objects yet.
-                                                this.state.GraphDatarows && this.state.GraphDatarows
-                                                && typeof this.state.GraphDatarows[row.label] !== 'object'
-                                                && this.state.GraphDatarows[row.label] !== null
-                                                && JSON.stringify(this.state.GraphDatarows[row.label])
+                                                this.state.GraphDatarows && typeof this.state.GraphDatarows[row.label] !== 'object'
+                                                && this.state.GraphDatarows[row.label] !== null && JSON.stringify(this.state.GraphDatarows[row.label])
                                             }
                                         </TableCell>
-                                        <TableCell align="center">
+                                        <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} align="right">
                                             {
-                                                <FormDialog handleToUpdate={updateAttributeValue.bind(this)} onClick={() => this.setAttribute(row.label, "GRAPH")} />
+                                                <FormDialog
+                                                    handleToUpdate={updateAttributeValue.bind(this)}
+                                                    onClick={() => this.setAttribute(row.label, "GRAPH")}
+                                                    label={row.label}
+                                                    current={
+                                                        this.state.GraphDatarows && typeof this.state.GraphDatarows[row.label] !== 'object'
+                                                        && this.state.GraphDatarows[row.label] !== null && JSON.stringify(this.state.GraphDatarows[row.label])
+                                                    }
+                                                />
                                             }
 
                                         </TableCell>
@@ -262,12 +269,15 @@ class AttributeEditor extends Component {
                     </TableContainer>
                 }
 
-                <List>
-                    <ListItem button onClick={this.toggleVertexAttributes} selected={this.state.vertexAttributeOpened}>
+                <List style={{ padding: '0px' }}>
+                    <ListItem button style={{ padding: '0px' }} onClick={this.toggleVertexAttributes} selected={this.state.vertexAttributeOpened}>
                         <ListItemIcon>
                             <EditIcon />
                         </ListItemIcon>
-                        <ListItemText primary="Vertex Attributes" />
+                        <ListItemText
+                            primary={<Typography variant="body2" >Vertex ({this.state.Vxrows.length} attributes)</Typography>}
+                            secondary={`ID: ${this.state.currentVxId}`}
+                        />
                     </ListItem>
                 </List>
 
@@ -277,31 +287,32 @@ class AttributeEditor extends Component {
                         <Table stickyHeader className="tableRoot" aria-label="simple table">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell"><b>Vertex Attributes</b></TableCell>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell" align="right"><b>Type</b></TableCell>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell" align="right"><b>Description</b></TableCell>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell" align="left"><b>Value</b></TableCell>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell" align="center"><b>Edit</b></TableCell>
+                                    <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} className="cell" align="left"><b>Attribute</b></TableCell>
+                                    <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} className="cell" align="left"><b>Value</b></TableCell>
+                                    <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} className="cell" align="right"></TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {this.state.Vxrows.slice(5, 12).map((row, index) => (
-
-                                    <TableRow key={row.label}>
-                                        <TableCell style={{ fontSize: '8pt' }} component="th" scope="row">{row.label}</TableCell>
-                                        <TableCell style={{ fontSize: '8pt' }} align="right">{row.type}</TableCell>
-                                        <TableCell style={{ fontSize: '8pt' }} align="right">{row.descr}</TableCell>
-
-                                        <TableCell style={{ fontSize: '8pt' }} align="left">
-                                            {this.state.VxDatarows && this.state.VxDatarows
-                                                && typeof this.state.VxDatarows[row.label] !== 'object'
-                                                && this.state.VxDatarows[row.label] !== null
-                                                && this.state.VxDatarows[row.label]
+                                    <TableRow key={row.label} title={`Attribute: ${row.label} [${row.type}]
+Description: ${row.descr}`}>
+                                        <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} component="th" scope="row" align="left">{row.label}</TableCell>
+                                        <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} align="left">
+                                            {this.state.VxDatarows && typeof this.state.VxDatarows[row.label] !== 'object'
+                                             && this.state.VxDatarows[row.label] !== null && this.state.VxDatarows[row.label]
                                             }
                                         </TableCell>
-                                        <TableCell align="center">
+                                        <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} align="right">
                                             {
-                                                <FormDialog handleToUpdate={updateAttributeValue.bind(this)} onClick={() => this.setAttribute(row.label, "VERTEX")} />
+                                                <FormDialog
+                                                    handleToUpdate={updateAttributeValue.bind(this)}
+                                                    onClick={() => this.setAttribute(row.label, "VERTEX")}
+                                                    label={row.label}
+                                                    current={
+                                                        this.state.VxDatarows && typeof this.state.VxDatarows[row.label] !== 'object'
+                                                    && this.state.VxDatarows[row.label] !== null&& this.state.VxDatarows[row.label]
+                                                    }
+                                                />
                                             }
 
                                         </TableCell>
@@ -314,12 +325,15 @@ class AttributeEditor extends Component {
                 }
 
 
-                <List>
-                    <ListItem button onClick={this.toggleTransactionAttributes} selected={this.state.transactionAttributeOpened}>
+                <List style={{ padding: '0px' }}>
+                    <ListItem style={{ padding: '0px' }} button onClick={this.toggleTransactionAttributes} selected={this.state.transactionAttributeOpened}>
                         <ListItemIcon>
                             <EditIcon />
                         </ListItemIcon>
-                        <ListItemText primary="Transaction Attributes" />
+                        <ListItemText
+                            primary={<Typography variant="body2" >Transaction ({this.state.Txrows.length} attributes)</Typography>}
+                            secondary={`ID: ${this.state.currentTxId} [NOT IMPLEMENTED]`}
+                        />
                     </ListItem>
                 </List>
                 {
@@ -329,31 +343,33 @@ class AttributeEditor extends Component {
                         <Table stickyHeader className="tableRoot" aria-label="simple table">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell"><b>Transaction Attributes</b></TableCell>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell" align="right"><b>Type</b></TableCell>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell" align="right"><b>Description</b></TableCell>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell" align="left"><b>Value</b></TableCell>
-                                    <TableCell style={{ fontSize: '8pt' }} className="cell" align="center"><b>Edit</b></TableCell>
+                                    <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} className="cell" align="left"><b>Attribute</b></TableCell>
+                                    <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} className="cell" align="left"><b>Value</b></TableCell>
+                                    <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} className="cell" align="right"></TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {this.state.Txrows.slice().map((row, index) => (
 
-                                    <TableRow key={row.label}>
-                                        <TableCell style={{ fontSize: '8pt' }} component="th" scope="row">{row.label}</TableCell>
-                                        <TableCell style={{ fontSize: '8pt' }} align="right">{row.type}</TableCell>
-                                        <TableCell style={{ fontSize: '8pt' }} align="right">{row.descr}</TableCell>
-
-                                        <TableCell style={{ fontSize: '8pt' }} align="left">
-                                            {this.state.TxDatarows && this.state.TxDatarows
-                                                && typeof this.state.TxDatarows[row.label] !== 'object'
-                                                && this.state.TxDatarows[row.label] !== null
-                                                && this.state.TxDatarows[row.label]
+                                    <TableRow key={row.label} title={`Attribute: ${row.label} [${row.type}]
+Description: ${row.descr}`}>
+                                        <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} component="th" scope="row" align="left">{row.label}</TableCell>
+                                        <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} align="left">
+                                            {this.state.TxDatarows && typeof this.state.TxDatarows[row.label] !== 'object'
+                                                && this.state.TxDatarows[row.label] !== null && this.state.TxDatarows[row.label]
                                             }
                                         </TableCell>
-                                        <TableCell align="center">
+                                        <TableCell style={{ fontSize: '8pt', padding: '5px', width: "30%" }} align="right">
                                             {
-                                                <FormDialog handleToUpdate={updateAttributeValue.bind(this)} onClick={() => this.setAttribute(row.label, "TRANSACTION")} />
+                                                <FormDialog
+                                                    handleToUpdate={updateAttributeValue.bind(this)}
+                                                    onClick={() => this.setAttribute(row.label, "TRANSACTION")}
+                                                    label={row.label}
+                                                    current={
+                                                        this.state.TxDatarows && typeof this.state.TxDatarows[row.label] !== 'object'
+                                                        && this.state.TxDatarows[row.label] !== null && this.state.TxDatarows[row.label]
+                                                    }
+                                                />
                                             }
 
                                         </TableCell>
@@ -367,8 +383,6 @@ class AttributeEditor extends Component {
             </>
         )
     }
-
-
 }
 
 export default AttributeEditor;
