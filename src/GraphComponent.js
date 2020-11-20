@@ -75,9 +75,7 @@ class GraphComponent extends Component {
                 const icon = this.icon_manager.getIconIndex(node['icon']);
                 const backgroundIcon = this.icon_manager.getIconIndex(node['background_icon']);
                 const color = ConstellationGraphLoader.loadColor(node['color']);
-
-                console.log('MMDEBUG: X='+ node["x"] + ', Y=' + node["y"] + ', Z=' + node["z"]);
-
+                
                 BufferBuilder.updateNodePosition(nodePos, node["x"], node["y"], node["z"], 1, this.nodePositions);
                 BufferBuilder.updateNodeVisuals(nodePos, icon, backgroundIcon, color, (this.selectedNode == nodePos), this.nodeVisuals);
                 this.graphRenderer.setNodes(this.nodePositions, this.nodeVisuals);
