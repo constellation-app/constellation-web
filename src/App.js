@@ -247,30 +247,30 @@ class App extends React.Component {
 
                 <main className={classes.content}>
                     <div className={classes.appBarSpacer} />
-                    <Container maxWidth={false} className={classes.container}>
+                    <Container maxWidth={false} className={classes.container} style={{ padding: '12px' }}>
                         <Grid container spacing={3}>
-                            {/* Side View */}
+                            {/* Attribute Editor */}
                             {this.state.AttributeEditorToggled &&
-                                <Grid item xs={this.state.AttributeEditorToggled ? 4 : 12}>
-                                    <Paper className={classes.paper}>
-                                        <h3>Attribute Editor</h3>
+                                <Grid item xs={this.state.AttributeEditorToggled ? 4 : 12} style={{ padding: '6px 0px 6px 6px' }}>
+                                    <Paper className={classes.paper} >
+                                        <h3 style={{ margin: '0px' }}>Attribute Editor</h3>
                                         <AttributeEditor selectedNode={this.state.selectedNodeId} graphId={this.state.currentGraphId} />
                                     </Paper>
                                 </Grid>
                             }
 
                             {/* Graph */}
-                            <Grid item xs={this.state.AttributeEditorToggled ? 8 : 12}>
-                                <Paper className={classes.paper}>
+                            <Grid item xs={this.state.AttributeEditorToggled ? 8 : 12} style={{ padding: '6px' }}>
+                                <Paper className={classes.paper} style={{ padding: '6px' }}>
                                     <GraphComponent handleToUpdate={updateAttributeValue.bind(this)} graphId={this.state.currentGraphId} />
                                 </Paper>
                             </Grid>
 
-                            {/* Bottom View*/}
+                            {/* Table View */}
                             {this.state.tableViewToggled &&
-                                <Grid item xs={12}>
+                                <Grid item xs={12} style={{ padding: '0px 6px 6px 6px' }}>
                                     <Paper className={classes.paper}>
-                                        <h3>Table View</h3>
+                                        <h3 style={{ margin: '0px' }}>Table View</h3>
                                         <TableViewComponent graphId={this.state.currentGraphId} />
                                     </Paper>
                                 </Grid>
