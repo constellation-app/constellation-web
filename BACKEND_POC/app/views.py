@@ -1000,6 +1000,14 @@ def ImportLegacyJSON(request):
         django_attributes = []
         graph_json = {}
         graph_data = graph_block['graph'][1]['data']
+
+        # Need to load in any defaults as they are not stored in star file for each record
+        for attr in attrs:
+            label = attr['label']
+            if label not in graph_data[0]:
+                if 'default' in attr:
+                    graph_data[0][label] = attr['default']
+
         for attr in graph_data[0]:
 
             # Find corresponding attribute definition
@@ -1056,6 +1064,14 @@ def ImportLegacyJSON(request):
         count = 0
         django_vertexes = []
         for vtx in vertexes:
+
+            # Need to load in any defaults as they are not stored in star file for each record
+            for attr in attrs:
+                label = attr['label']
+                if label not in vtx:
+                    if 'default' in attr:
+                        vtx[label] = attr['default']
+
             vx_id = vtx['vx_id_']
 
             # Keep track of maximum ID to setup auto increment
@@ -1097,9 +1113,16 @@ def ImportLegacyJSON(request):
         count = 0
         django_vertex_attributes = []
         for vtx in vertexes:
+
+            # Need to load in any defaults as they are not stored in star file for each record
+            for attr in attrs:
+                label = attr['label']
+                if label not in vtx:
+                    if 'default' in attr:
+                        vtx[label] = attr['default']
+
             for attr in vtx:
                 if attr != 'vx_id_':
-
                     # Find corresponding attribute definition
                     graph_vtx_attrib = graph_vertex_attribute_defs[attr]
                     value = vtx[attr]
@@ -1161,6 +1184,14 @@ def ImportLegacyJSON(request):
         count = 0
         django_transactions = []
         for trans in transactions:
+
+            # Need to load in any defaults as they are not stored in star file for each record
+            for attr in attrs:
+                label = attr['label']
+                if label not in trans:
+                    if 'default' in attr:
+                        trans[label] = attr['default']
+
             tx_id = trans['tx_id_']
             tx_dir = trans['tx_dir_']
             vx_src = vertex_dict[trans['vx_src_']]
@@ -1206,6 +1237,14 @@ def ImportLegacyJSON(request):
         count = 0
         django_trans_attribs = []
         for trans in transactions:
+
+            # Need to load in any defaults as they are not stored in star file for each record
+            for attr in attrs:
+                label = attr['label']
+                if label not in trans:
+                    if 'default' in attr:
+                        trans[label] = attr['default']
+
             for attr in trans:
                 if attr != 'tx_id_' and attr != 'vx_src_' and attr != 'vx_dst_' and attr != 'tx_dir_':
                     # Find corresponding attribute definition
