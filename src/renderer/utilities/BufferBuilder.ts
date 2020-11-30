@@ -3,12 +3,12 @@ export class BufferBuilder {
     /**
      * Creates a color value suitable for providing to other methods in the BufferBuider class.
      * 
-     * @param red - the red component of the color in the range 0.0 - 1.0.
-     * @param green - the green component of the color in the range 0.0 - 1.0.
-     * @param blue - the blue component of the color in the range 0.0 - 1.0.
+     * @param red - the red component of the color in the range 0 - 255.
+     * @param green - the green component of the color in the range 0 - 255.
+     * @param blue - the blue component of the color in the range 0 - 255.
      */
     static createColor = (red: number, green: number, blue: number): number => {
-        return (Math.floor(red * 255) << 16) | (Math.floor(green * 255) << 8) | Math.floor(blue * 255);
+        return (red << 16) | (green << 8) | (blue);
     }
 
     /**
