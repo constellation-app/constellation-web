@@ -2,7 +2,7 @@ mysqlclient==2.0.1
 Django==3.1.9
 django-silk==4.1.0
 django-extensions==3.0.9
-djangorestframework==3.11.1
+djangorestframework==3.11.2
 drf-yasg==1.17.1
 celery==4.2.0
 kombu==4.6.6
