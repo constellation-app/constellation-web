@@ -1,3 +1,5 @@
+🧪 **Note that this project is experimental and only exists as a POC (for now)**
+
 # Installation Guide
 To run the <b>Web Constellation</b> front end, ensure you have the prerequisites installed and continue to the instructions.
 
