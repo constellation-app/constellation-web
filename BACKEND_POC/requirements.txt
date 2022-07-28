@@ -4,7 +4,7 @@ django-silk==4.1.0
 django-extensions==3.0.9
 djangorestframework==3.11.2
 drf-yasg==1.17.1
-celery==4.2.0
+celery==5.2.2
 kombu==4.6.6
 pika==1.1.0
 channels==2.4.0
