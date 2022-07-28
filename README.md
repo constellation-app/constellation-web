@@ -1,10 +1,7 @@
 🧪 **Note that this project is experimental and only exists as a POC (for now)**
 
 # Installation Guide
-To run the <b>Web Constellation</b> front end, ensure you have the prerequisites installed and continue to the instructions.
-
-<img width="100" height="100" src = "https://seeklogo.com/images/N/nodejs-logo-FBE122E377-seeklogo.com.png"/>
-<img width="100" height="100" src = "https://cdn.worldvectorlogo.com/logos/react.svg"/>
+To run the <b>Web Constellation</b> front end, ensure you have the prerequisites (NodeJS and React) installed and continue to the instructions.
 
 ## Prerequisites
 1. Download and Install [Node](https://nodejs.org/en/download/).
